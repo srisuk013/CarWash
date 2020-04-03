@@ -21,7 +21,7 @@ namespace CarWash.Areas.Account
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly RoleManager<IdentityUser> _roleManager;
+        
         private readonly CarWashContext _context;
         public AccountController(CarWashContext context, UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
@@ -30,7 +30,7 @@ namespace CarWash.Areas.Account
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
-            _roleManager = roleManager;
+           
         }
         [HttpGet]
 

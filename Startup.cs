@@ -37,6 +37,7 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
 options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User ID=srisuk013; Password=Srisuk1234"));
 
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
          .AddEntityFrameworkStores<AppDbContext>();
 
             services.AddControllersWithViews();
