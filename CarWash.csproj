@@ -5,6 +5,13 @@
     <UserSecretsId>aspnet-repos-45B22D0F-30A0-4CCE-9D01-B1404122EA8C</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Controllers\1\**" />
+    <Content Remove="Controllers\1\**" />
+    <EmbeddedResource Remove="Controllers\1\**" />
+    <None Remove="Controllers\1\**" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
@@ -22,10 +29,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Utils" Version="3.1.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\Account\Controllers\" />
   </ItemGroup>
 
 </Project>
