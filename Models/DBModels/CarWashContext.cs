@@ -27,7 +27,8 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<UserLogs> UserLogs { get; set; }
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
-        public object CWUser { get; internal set; }
+
+     
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,13 +113,29 @@ namespace CarWash.Models.DBModels
                     .IsUnique()
                     .HasFilter("([NormalizedUserName] IS NOT NULL)");
 
-                entity.Property(e => e.Email).HasMaxLength(256);
+                entity.Property(e => e.ConcurrencyStamp).IsRequired();
 
-                entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
+                entity.Property(e => e.Email)
+                    .IsRequired()
+                    .HasMaxLength(256);
 
-                entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
+                entity.Property(e => e.NormalizedEmail)
+                    .IsRequired()
+                    .HasMaxLength(256);
 
-                entity.Property(e => e.UserName).HasMaxLength(256);
+                entity.Property(e => e.NormalizedUserName)
+                    .IsRequired()
+                    .HasMaxLength(256);
+
+                entity.Property(e => e.PasswordHash).IsRequired();
+
+                entity.Property(e => e.PhoneNumber).IsRequired();
+
+                entity.Property(e => e.SecurityStamp).IsRequired();
+
+                entity.Property(e => e.UserName)
+                    .IsRequired()
+                    .HasMaxLength(256);
             });
 
             modelBuilder.Entity<Car>(entity =>
@@ -126,18 +143,20 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.CarId).ValueGeneratedNever();
 
                 entity.Property(e => e.Brand)
-                    .HasMaxLength(30)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.CarNumber)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
-                entity.Property(e => e.Image).HasColumnType("image");
+                entity.Property(e => e.Image)
+                    .IsRequired()
+                    .HasColumnType("image");
 
                 entity.Property(e => e.Model)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
             });
 
             modelBuilder.Entity<Job>(entity =>
@@ -145,8 +164,8 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.JobId).ValueGeneratedNever();
 
                 entity.Property(e => e.JobApprove)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.JobDate).HasColumnType("date");
 
@@ -155,8 +174,8 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.Longitude).HasColumnType("decimal(18, 0)");
 
                 entity.Property(e => e.StatusName)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
             });
 
             modelBuilder.Entity<Package>(entity =>
@@ -164,63 +183,75 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.PackageId).ValueGeneratedNever();
 
                 entity.Property(e => e.Description)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(200);
 
-                entity.Property(e => e.PackageImage).HasColumnType("image");
+                entity.Property(e => e.PackageImage)
+                    .IsRequired()
+                    .HasColumnType("image");
 
                 entity.Property(e => e.PackageName)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Status)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.UpdateTime).HasColumnType("datetime");
             });
 
             modelBuilder.Entity<User>(entity =>
             {
+                entity.HasKey(e => e.UserId);
+
                 entity.Property(e => e.UserId).ValueGeneratedNever();
 
+                entity.Property(e => e.AspNetRole)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(e => e.AspNetUserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
                 entity.Property(e => e.Code)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
-                entity.Property(e => e.IdCard)
-                    .HasMaxLength(13)
-                    .IsUnicode(false);
+                entity.Property(e => e.FullName)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
-                entity.Property(e => e.Image).HasColumnType("image");
+                entity.Property(e => e.Id)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(e => e.IdCardNumber)
+                    .IsRequired()
+                    .HasMaxLength(13);
+
+                entity.Property(e => e.Image).HasMaxLength(450);
 
                 entity.Property(e => e.Latitude).HasColumnType("decimal(18, 0)");
 
                 entity.Property(e => e.Longitude).HasColumnType("decimal(18, 0)");
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Password)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.Phone)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Role)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Status)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Username)
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(50);
             });
 
             modelBuilder.Entity<UserLogs>(entity =>
@@ -228,8 +259,8 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.UserLogsId).ValueGeneratedNever();
 
                 entity.Property(e => e.LogsKey)
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                    .IsRequired()
+                    .HasMaxLength(100);
             });
 
             modelBuilder.Entity<Wallet>(entity =>
@@ -237,7 +268,8 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.WalletId).ValueGeneratedNever();
 
                 entity.Property(e => e.Balance)
-                    .HasMaxLength(50)
+                    .IsRequired()
+                    .HasMaxLength(100)
                     .IsUnicode(false);
             });
 

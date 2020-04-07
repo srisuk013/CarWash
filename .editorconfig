@@ -8,3 +8,6 @@ dotnet_style_require_accessibility_modifiers = never:silent
 
 # IDE0050: Convert to tuple
 dotnet_diagnostic.IDE0050.severity = none
+
+# IDE0035: Unreachable code detected
+dotnet_diagnostic.IDE0035.severity = none

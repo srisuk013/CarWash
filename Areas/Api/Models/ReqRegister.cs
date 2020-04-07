@@ -1,25 +1,21 @@
-﻿using CarWash.Models.DBModels;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models
 {
-    public class CWUser
+    public class ReqRegister
     {
-        private User user;
-
-        public CWUser(User user)
-        {
-            this.user = user;
-        }
-
-        public string Name { get; set; }
+        public string FullName { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-
+        public string IdCardNamber { get; set; }
+        public string Phone { get; set; }
        
+
+
+
+
     }
 }
-

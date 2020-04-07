@@ -32,40 +32,9 @@ namespace CarWash.Areas.Api
             _signInManager = signInManager;
             _roleManager = roleManager;
         }
-        [HttpGet]
+       
 
-        public IActionResult UserList()
-
-        {
-            List<User> users = _context.User.ToList();
-            List<CWUser> cwUsers = new List<CWUser>();
-            foreach (User user in users)
-            {
-                CWUser cwUser = new CWUser(user);
-                cwUsers.Add(cwUser);
-            }
-            Object result = new
-            {
-                Users = cwUsers
-            };
-            //IdentityUser newUser = new IdentityUser();
-            //newUser.UserName = "aa";
-            //newUser.Email = "ss";
-            //newUser.PhoneNumber = "00";
-
-            //IdentityResult createResult = await _userManager.CreateAsync(newUser, "xxx");
-            //var addRoleResult = await _userManager.AddToRoleAsync(newUser, "Employee");
-            //if(createResult == IdentityResult.Success)
-            //{
-            //    //return Ok();
-            //}
-            //else
-            //{
-            //    //return BadRequest();
-            //}
-            return Json(result);
-
-        }
+       
     }
 
 }

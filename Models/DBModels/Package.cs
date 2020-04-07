@@ -7,11 +7,11 @@ namespace CarWash.Models.DBModels
     {
         public int PackageId { get; set; }
         public string PackageName { get; set; }
-        public int? Price { get; set; }
+        public int Price { get; set; }
         public byte[] PackageImage { get; set; }
         public string Status { get; set; }
-        public DateTime? CreatedTime { get; set; }
-        public DateTime? UpdateTime { get; set; }
+        public DateTime CreatedTime { get; set; }
+        public DateTime UpdateTime { get; set; }
         public string Description { get; set; }
     }
 }
