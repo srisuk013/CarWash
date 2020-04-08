@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,8 +12,8 @@ namespace CarWash.Areas.Api.Models
         public string Username { get; set; }
         public string Password { get; set; }
         public string IdCardNamber { get; set; }
-        public string IdCardNumber { get; set; }
-
+        public string Phone { get; set; }
+        public IFormFile Image { get; set; }
     }
 }
        

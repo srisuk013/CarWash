@@ -33,37 +33,57 @@ namespace CarWash.Areas.Account
             _signInManager = signInManager;
 
         }
+
+
+
         [HttpPost]
 
         public async Task<IActionResult> Register([FromForm]ReqRegister req)
-
         {
-            
-            IdentityUser Users = new IdentityUser();
-            Users.UserName = req.Username;
-          
-
-            IdentityResult result = await _userManager.CreateAsync(Users, req.Password);
-
-            if (result == IdentityResult.Success)
+            try
             {
-                User user = new User();
-                user.FullName = req.FullName;
-                user.Username = req.Username;
-                user.Phone = req.IdCardNumber;
-                user.IdCardNumber = req.IdCardNamber;
-                _context.User.Add(user);
-                _context.SaveChanges();
+                IdentityUser aspnetUser = new IdentityUser();
+                aspnetUser.UserName = req.Username;
+
+                IdentityResult result = await _userManager.CreateAsync(aspnetUser, req.Password);
+
+                if (result == IdentityResult.Success)
+                {
+                    IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, "Employee");
+                    if (roleResult == IdentityResult.Success)
+                    {
+                        User user = new User();
+                        user.AspNetRole = "Employee";
+                        user.AspNetUserId = aspnetUser.Id;
+                        user.FullName = req.FullName;
+                        user.Username = req.Username;
+                        user.Phone = req.Phone;
+                        user.IdCardNumber = req.IdCardNamber;
+                        _context.User.Add(user);
+                        _context.SaveChanges();
+                        return Json(result);
+                    }
+                }
             }
-            return Json(result);
-                
-           
-
-        }
-
+            catch (Exception e)
+            {
+                return BadRequest();
+            }
+            return Ok();
+        } 
+            
     }
 
 }
+         
+            
+           
+          
+
+
+
+
+
 
 
 

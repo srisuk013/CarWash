@@ -10,16 +10,14 @@ namespace CarWash.Models.DBModels
         public string Username { get; set; }
         public string IdCardNumber { get; set; }
         public string Phone { get; set; }
-        public string Role { get; set; }
-        public DateTime CreatedTime { get; set; }
-        public DateTime UpdatedTime { get; set; }
+        public DateTime? CreatedTime { get; set; }
+        public DateTime? UpdatedTime { get; set; }
         public string Code { get; set; }
         public string Status { get; set; }
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
+        public decimal? Latitude { get; set; }
+        public decimal? Longitude { get; set; }
         public string AspNetUserId { get; set; }
         public string AspNetRole { get; set; }
         public string Image { get; set; }
-        public string Id { get; set; }
     }
 }

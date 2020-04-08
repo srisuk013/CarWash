@@ -6,7 +6,8 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-        
+       
+
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -27,7 +28,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-       
+ 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,29 +113,13 @@ namespace CarWash.Models.DBModels
                     .IsUnique()
                     .HasFilter("([NormalizedUserName] IS NOT NULL)");
 
-                entity.Property(e => e.ConcurrencyStamp).IsRequired();
+                entity.Property(e => e.Email).HasMaxLength(256);
 
-                entity.Property(e => e.Email)
-                    .IsRequired()
-                    .HasMaxLength(256);
+                entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
 
-                entity.Property(e => e.NormalizedEmail)
-                    .IsRequired()
-                    .HasMaxLength(256);
+                entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
 
-                entity.Property(e => e.NormalizedUserName)
-                    .IsRequired()
-                    .HasMaxLength(256);
-
-                entity.Property(e => e.PasswordHash).IsRequired();
-
-                entity.Property(e => e.PhoneNumber).IsRequired();
-
-                entity.Property(e => e.SecurityStamp).IsRequired();
-
-                entity.Property(e => e.UserName)
-                    .IsRequired()
-                    .HasMaxLength(256);
+                entity.Property(e => e.UserName).HasMaxLength(256);
             });
 
             modelBuilder.Entity<Car>(entity =>
@@ -202,8 +187,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(e => e.UserId);
-
                 entity.Property(e => e.UserId).ValueGeneratedNever();
 
                 entity.Property(e => e.AspNetRole)
@@ -214,17 +197,11 @@ namespace CarWash.Models.DBModels
                     .IsRequired()
                     .HasMaxLength(450);
 
-                entity.Property(e => e.Code)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.Property(e => e.Code).HasMaxLength(50);
 
                 entity.Property(e => e.FullName)
                     .IsRequired()
                     .HasMaxLength(50);
-
-                entity.Property(e => e.Id)
-                    .IsRequired()
-                    .HasMaxLength(450);
 
                 entity.Property(e => e.IdCardNumber)
                     .IsRequired()
@@ -240,13 +217,7 @@ namespace CarWash.Models.DBModels
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.Property(e => e.Role)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.Status)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(50);
 
                 entity.Property(e => e.Username)
                     .IsRequired()
