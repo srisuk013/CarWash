@@ -11,11 +11,11 @@ namespace CarWash.Areas.Api.Models
         public string Username { get; set; }
         public string Password { get; set; }
         public string IdCardNamber { get; set; }
-        public string Phone { get; set; }
+        public string IdCardNumber { get; set; }
+
+    }
+}
        
 
 
 
-
-    }
-}

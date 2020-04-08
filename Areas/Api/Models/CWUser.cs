@@ -19,7 +19,12 @@ namespace CarWash.Areas.Api.Models
         public string Username { get; set; }
         public string Password { get; set; }
 
-       
+
     }
 }
+
+
+
+
+
 
