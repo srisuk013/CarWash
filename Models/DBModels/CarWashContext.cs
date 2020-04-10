@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-       
+        
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -28,7 +28,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
- 
+      
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -124,8 +124,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Car>(entity =>
             {
-                entity.Property(e => e.CarId).ValueGeneratedNever();
-
                 entity.Property(e => e.Brand)
                     .IsRequired()
                     .HasMaxLength(50);
@@ -145,8 +143,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Job>(entity =>
             {
-                entity.Property(e => e.JobId).ValueGeneratedNever();
-
                 entity.Property(e => e.JobApprove)
                     .IsRequired()
                     .HasMaxLength(50);
@@ -164,8 +160,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Package>(entity =>
             {
-                entity.Property(e => e.PackageId).ValueGeneratedNever();
-
                 entity.Property(e => e.Description)
                     .IsRequired()
                     .HasMaxLength(200);
@@ -226,8 +220,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<UserLogs>(entity =>
             {
-                entity.Property(e => e.UserLogsId).ValueGeneratedNever();
-
                 entity.Property(e => e.LogsKey)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -235,8 +227,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Wallet>(entity =>
             {
-                entity.Property(e => e.WalletId).ValueGeneratedNever();
-
                 entity.Property(e => e.Balance)
                     .IsRequired()
                     .HasMaxLength(100)
@@ -245,8 +235,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<WalletLogs>(entity =>
             {
-                entity.Property(e => e.WalletLogsId).ValueGeneratedNever();
-
                 entity.Property(e => e.Amount).HasColumnType("decimal(18, 0)");
 
                 entity.Property(e => e.CConfirm)
