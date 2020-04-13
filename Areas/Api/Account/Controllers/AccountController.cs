@@ -22,7 +22,6 @@ namespace CarWash.Areas.Account
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
-
         private readonly CarWashContext _context;
         public AccountController(CarWashContext context, UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager)
@@ -30,7 +29,6 @@ namespace CarWash.Areas.Account
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
-
         }
         private Boolean VerifyPeopleID(String PID)
         {
@@ -40,19 +38,13 @@ namespace CarWash.Areas.Account
             //ตรวจสอบว่าข้อมูลมีทั้งหมด 13 ตัวอักษร
             if (PID.Trim().Length != 13)
                 return false;
-
-
             int sumValue = 0;
             for (int i = 0; i < PID.Length - 1; i++)
                 sumValue += int.Parse(PID.ToString()) * (13 - i);
             int v = 11 - (sumValue % 11);
             return PID[12].ToString() == v.ToString();
         }
-
-
-
         [HttpPost]
-
         public async Task<IActionResult> Register([FromForm]ReqRegister req)
         {
             try
@@ -101,16 +93,28 @@ namespace CarWash.Areas.Account
                     message = "เบอร์นี้มีผู้ใช้งานแล้ว";
                     return BadRequest();
                 }
+                else if (req.Phone.Length != 10)
+                {
+
+                    message = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง";
+                    return BadRequest();
+                }
+                
+                
                 else if (req.Phone.Length == 10)
                 {
                     var prefix = req.Phone.Substring(0, 2);
-                    if (prefix != "08" && prefix != "09")
+                    if (prefix != "08" || prefix != "09" || prefix != "06")
+                    {
+                        message = "เบอร์โทรถูกต้อง";
+                    }
+                    else
+                    {
+                            message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
+                        return BadRequest("");
+                    }
 
-                        message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
-                    return BadRequest();
                 }
-
-
                 else if (VerifyPeopleID(req.IdCardNamber))
                 {
                     message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
@@ -121,15 +125,13 @@ namespace CarWash.Areas.Account
                     message = "เลขบัตรประชาชนซ้ำ";
                     return BadRequest();
                 }
-                else
-                {
-                    success = true;
-                    message = "สมัครสมาชิกเรียบร้อยแล้ว";
-                }
+
+                success = true;
+                message = "สมัครสมาชิกเรียบร้อยแล้ว";
+
                 IdentityUser aspnetUser = new IdentityUser();
                 aspnetUser.UserName = req.Username;
                 IdentityResult result = await _userManager.CreateAsync(aspnetUser, req.Password);
-
                 if (result == IdentityResult.Success)
                 {
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, "Employee");
@@ -179,7 +181,6 @@ namespace CarWash.Areas.Account
 
 
 
-                    
 
 
 
@@ -192,12 +193,24 @@ namespace CarWash.Areas.Account
 
 
 
-               
 
 
 
 
-             
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

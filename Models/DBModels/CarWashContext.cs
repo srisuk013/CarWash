@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-        
+       
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -181,8 +181,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<User>(entity =>
             {
-                entity.Property(e => e.UserId).ValueGeneratedNever();
-
                 entity.Property(e => e.AspNetRole)
                     .IsRequired()
                     .HasMaxLength(450);
