@@ -13,6 +13,7 @@ using System.Text;
 using CarWash.Models;
 using Microsoft.AspNetCore.Authorization;
 using MySqlX.XDevAPI.Common;
+using Org.BouncyCastle.Ocsp;
 
 namespace CarWash.Areas.Account
 {
@@ -23,6 +24,8 @@ namespace CarWash.Areas.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly CarWashContext _context;
+        private Role reqRole;
+
         public AccountController(CarWashContext context, UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager)
         {
@@ -30,6 +33,29 @@ namespace CarWash.Areas.Account
             _userManager = userManager;
             _signInManager = signInManager;
         }
+        private string RunnigCodeId(int role)
+        {
+            int countRunning = _context.User.Where(o => o.Role == role
+            && o.CreatedTime.Value.Year == DateTime.Now.Year
+            && o.CreatedTime.Value.Month == DateTime.Now.Month).Count() + 1;
+            string codeSum = DateTime.Now.ToString("yyMM") + countRunning.ToString().PadLeft(4, '0');
+            string code = "";
+            if (role == Role.Admin)
+            {
+                code = "Adm" + codeSum;
+            }
+            else if (role == Role.Customer)
+            {
+                code = "Cus" + codeSum;
+            }
+            else if (role == Role.Employee)
+            {
+                code = "Emp"+ codeSum;
+            }
+
+            return code;
+        }
+        
         private Boolean VerifyPeopleID(String PID)
         {
             //ตรวจสอบว่าทุก ๆ ตัวอักษรเป็นตัวเลข
@@ -44,8 +70,16 @@ namespace CarWash.Areas.Account
             int v = 11 - (sumValue % 11);
             return PID[12].ToString() == v.ToString();
         }
+       
+        [HttpGet]
+        public IActionResult Test()
+        {
+            return Ok();
+        }
+
+
         [HttpPost]
-        public async Task<IActionResult> Register([FromForm]ReqRegister req)
+        public async Task<IActionResult> Register([FromForm]ReqRegister req)           
         {
             try
             {
@@ -58,18 +92,18 @@ namespace CarWash.Areas.Account
                 if (req.Username.Length < 4)
                 {
                     message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";
-                    return BadRequest();
+                    return BadRequest("กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร");
                 }
                 else if (String.IsNullOrEmpty(req.Username))
                 {
                     message = "กรุณากรอกUser";
-                    return BadRequest();
+                    return BadRequest("กรุณากรอกUser");
                 }
 
                 else if (aspnetUserCheck != null)
                 {
                     message = "มีผู้ใช้งานแล้ว";
-                    return BadRequest();
+                    return BadRequest("มีผู้ใช้งานแล้ว");
                 }
 
                 else if (String.IsNullOrEmpty(req.Password))
@@ -99,8 +133,7 @@ namespace CarWash.Areas.Account
                     message = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง";
                     return BadRequest();
                 }
-                
-                
+
                 else if (req.Phone.Length == 10)
                 {
                     var prefix = req.Phone.Substring(0, 2);
@@ -110,7 +143,7 @@ namespace CarWash.Areas.Account
                     }
                     else
                     {
-                            message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
+                        message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
                         return BadRequest("");
                     }
 
@@ -134,13 +167,30 @@ namespace CarWash.Areas.Account
                 IdentityResult result = await _userManager.CreateAsync(aspnetUser, req.Password);
                 if (result == IdentityResult.Success)
                 {
-                    IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, "Employee");
+                    string roleName = "";
+                    if (req.Role==Role.Admin)
+                    {
+                        roleName= Role.Desc.Admin;
+                    }
+                    else if (req.Role==Role.Customer)
+                    {
+                        roleName = Role.Desc.Customer;
+
+                    }
+                    else if (req.Role==Role.Employee)
+                    {
+                        roleName = Role.Desc.Employee;
+                    }
+                    IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);     
                     if (roleResult == IdentityResult.Success)
                     {
                         User user = new User();
-                        user.AspNetRole = "Employee";
+                        user.AspNetRole = roleName;
                         user.AspNetUserId = aspnetUser.Id;
                         user.CreatedTime = DateTime.Now;
+                        user.UpdatedTime = DateTime.Now;
+                        string codeId = RunnigCodeId(req.Role);           
+                        user.Code = codeId;  
                         user.FullName = req.FullName;
                         user.Username = req.Username;
                         user.Phone = req.Phone;
@@ -154,6 +204,7 @@ namespace CarWash.Areas.Account
             }
             catch (Exception e)
             {
+                return BadRequest();
                 IdentityUser deleteUser = await _userManager.FindByNameAsync(req.Username.ToLower());
                 if (deleteUser != null)
                 {
@@ -165,14 +216,31 @@ namespace CarWash.Areas.Account
                         _context.SaveChanges();
                     }
                 }
-                return BadRequest();
+                
             }
             return Ok();
+        
         }
 
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

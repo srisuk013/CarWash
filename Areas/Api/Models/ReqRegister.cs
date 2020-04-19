@@ -13,6 +13,7 @@ namespace CarWash.Areas.Api.Models
         public string Password { get; set; }
         public string IdCardNamber { get; set; }
         public string Phone { get; set; }
+        public int Role { get; set; }
         public IFormFile Image { get; set; }
     }
 }

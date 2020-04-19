@@ -19,5 +19,6 @@ namespace CarWash.Models.DBModels
         public string AspNetUserId { get; set; }
         public string AspNetRole { get; set; }
         public string Image { get; set; }
+        public int Role { get; set; }
     }
 }

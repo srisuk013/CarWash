@@ -7,7 +7,6 @@ namespace CarWash.Models.DBModels
     public partial class CarWashContext : DbContext
     {
        
-
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
