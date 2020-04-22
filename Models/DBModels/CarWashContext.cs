@@ -7,6 +7,7 @@ namespace CarWash.Models.DBModels
     public partial class CarWashContext : DbContext
     {
        
+
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -27,8 +28,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-      
-
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<AspNetRoleClaims>(entity =>
@@ -188,7 +188,9 @@ namespace CarWash.Models.DBModels
                     .IsRequired()
                     .HasMaxLength(450);
 
-                entity.Property(e => e.Code).HasMaxLength(50);
+                entity.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.FullName)
                     .IsRequired()
@@ -207,8 +209,6 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.Phone)
                     .IsRequired()
                     .HasMaxLength(50);
-
-                entity.Property(e => e.Status).HasMaxLength(50);
 
                 entity.Property(e => e.Username)
                     .IsRequired()

@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using CarWash.Data;
 using CarWash.Models.DBModels;
 using CarWash.Areas.Api;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CarWash
 {
@@ -35,6 +36,7 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
 
             services.AddDbContextPool<AppDbContext>(options =>
 options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User ID=srisuk013; Password=Srisuk1234"));
+            
 
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddRoles<IdentityRole>()
@@ -96,7 +98,6 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
 
             app.UseAuthentication();
             app.UseAuthorization();
-
             
             app.UseEndpoints(endpoints =>
             {
