@@ -81,14 +81,14 @@ namespace CarWash.Areas.Account
                 response.Success = false;
                 if (req.Username.Length < 4)
                 {
-                    /*message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";*/
+               
                     response.Message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (String.IsNullOrEmpty(req.Username))
                 {
                     response.Message = "กรุณากรอกUser";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (aspnetUserCheck != null)
                 {
@@ -98,32 +98,32 @@ namespace CarWash.Areas.Account
                 if (String.IsNullOrEmpty(req.Password))
                 {
                     response.Message = "กรุณากรอกPassword";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (req.Password.Length < 8)
                 {
                     response.Message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 8 ตัวอักษร";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (String.IsNullOrEmpty(req.Phone))
                 {
                     response.Message = "กรุณากรอกPhone";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (phoneCheck != null)
                 {
                     response.Message = "เบอร์นี้มีผู้ใช้งานแล้ว";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (req.Phone.Length != 10)
                 {
                     response.Message = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (String.IsNullOrEmpty(req.IdCardNumber))
                 {
                     response.Message = "กรุณากรอกIdCardNumber";
-                    return Json(response.Message);
+                    return Json(response);
                 }
                 if (req.Phone.Length == 10)
                 {
@@ -135,26 +135,38 @@ namespace CarWash.Areas.Account
                     else
                     {
                         response.Message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
-                        return Json(response.Message);
+                        return Json(response);
                     }
                 }
                 if (idCardNumberCheck != null)
                 {
                     response.Message = "เลขบัตรประชาชนซ้ำ";
-                    return Json(response.Message);
+                    return Json(response);
 
                 }
                 if (req.IdCardNumber.Length != 13)
                 {
                     response.Message = "เลขบัตรประชาชนให้ครบ13";
-                    return Json(response.Message);
+                    return Json(response);
 
                 }
                 if (VerifyPeopleID(req.IdCardNumber))
                 {
                     response.Message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
-                    return Json(response.Message);
+                    return Json(response);
                 }
+               
+                if (req.Role >=1 && req.Role<=3)
+                {
+                    response.Message = "Roleถูกต้อง";
+
+                }
+                else
+                {
+                    response.Message = "กรุณากรอกเลขRoleให้ถูกต้อง";
+                    return Json(response);
+                }
+
 
 
 
@@ -222,7 +234,7 @@ namespace CarWash.Areas.Account
 
 
                 }
-                return BadRequest(e.Message);
+               /* return BadRequest(e.Message);*/
             }
 
 
