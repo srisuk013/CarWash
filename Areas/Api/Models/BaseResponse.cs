@@ -7,15 +7,10 @@ namespace CarWash.Areas.Api.Models
 {
     public class BaseResponse
     {
-        private bool success;
-        private string message;
 
-        public BaseResponse(Boolean success,string message)
-        {
-            this.success = success;
-            this.message = message;
+        public bool Success { get; set; }
 
-        }
+        public string Message { get; set; }
 
     }
 }

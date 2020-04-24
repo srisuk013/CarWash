@@ -18,7 +18,7 @@ using Org.BouncyCastle.Ocsp;
 namespace CarWash.Areas.Account
 {
     [Area("Api")]
-    
+
     public class AccountController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
@@ -35,7 +35,7 @@ namespace CarWash.Areas.Account
         }
         private string RunnigCodeId(int role)
         {
-         
+
             int countRunning = _context.User.Where(o => o.Role == role
             && o.CreatedTime.Year == DateTime.Now.Year
             && o.CreatedTime.Month == DateTime.Now.Month).Count() + 1;
@@ -64,11 +64,11 @@ namespace CarWash.Areas.Account
             {
                 sumValue += (13 - i) * int.Parse(idc[i].ToString());
             }
-            int v = (11 - (sumValue % 11))%10;
+            int v = (11 - (sumValue % 11)) % 10;
             string realIdentityCard = (idc + v);
             return realIdentityCard != pid;
         }
-       
+
         [HttpPost]
         public async Task<IActionResult> Register([FromForm] ReqRegister req)
         {
@@ -77,95 +77,86 @@ namespace CarWash.Areas.Account
                 IdentityUser aspnetUserCheck = await _userManager.FindByNameAsync(req.Username.ToLower());
                 User phoneCheck = _context.User.Where(o => o.Phone == req.Phone).FirstOrDefault();
                 User idCardNumberCheck = _context.User.Where(o => o.IdCardNumber == req.IdCardNumber).FirstOrDefault();
-                Boolean success = false;
-                string message = "";
-
+                              BaseResponse response = new BaseResponse();
+                response.Success = false;
                 if (req.Username.Length < 4)
                 {
-                    message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";
-                    return BadRequest(message);
-
+                    /*message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";*/
+                    response.Message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";
+                    return Json(response.Message);
                 }
                 if (String.IsNullOrEmpty(req.Username))
                 {
-                    message = "กรุณากรอกUser";
-                    return BadRequest(message);
+                    response.Message = "กรุณากรอกUser";
+                    return Json(response.Message);
                 }
-
                 if (aspnetUserCheck != null)
                 {
-                    message = "มีผู้ใช้งานแล้ว";
-                    return BadRequest(message);
+                    response.Message = "มีผู้ใช้งานแล้ว";
+                    return Json(response);
                 }
-
                 if (String.IsNullOrEmpty(req.Password))
                 {
-                    message = "กรุณากรอกPassword";
-                    return BadRequest(message);
-
+                    response.Message = "กรุณากรอกPassword";
+                    return Json(response.Message);
                 }
                 if (req.Password.Length < 8)
                 {
-                    message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 8 ตัวอักษร";
-                    return BadRequest(message);
-
+                    response.Message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 8 ตัวอักษร";
+                    return Json(response.Message);
                 }
                 if (String.IsNullOrEmpty(req.Phone))
                 {
-                    message = "กรุณากรอกPhone";
-                    return BadRequest(message);
-
+                    response.Message = "กรุณากรอกPhone";
+                    return Json(response.Message);
                 }
                 if (phoneCheck != null)
                 {
-                    message = "เบอร์นี้มีผู้ใช้งานแล้ว";
-                    return BadRequest(message);
-
+                    response.Message = "เบอร์นี้มีผู้ใช้งานแล้ว";
+                    return Json(response.Message);
                 }
                 if (req.Phone.Length != 10)
                 {
-
-                    message = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง";
-                    return BadRequest(message);
-
+                    response.Message = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง";
+                    return Json(response.Message);
                 }
                 if (String.IsNullOrEmpty(req.IdCardNumber))
                 {
-                    message = "กรุณากรอกIdCardNumber";
-                    return BadRequest(message);
+                    response.Message = "กรุณากรอกIdCardNumber";
+                    return Json(response.Message);
                 }
-
                 if (req.Phone.Length == 10)
                 {
                     var prefix = req.Phone.Substring(0, 2);
                     if (prefix != "08" || prefix != "09" || prefix != "06")
                     {
-                        message = "เบอร์โทรถูกต้อง";
+                        response.Message = "เบอร์โทรถูกต้อง";
                     }
                     else
                     {
-                        message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
-                        return BadRequest(message);
+                        response.Message = "กรุณาตรวจสอบเบอร์ของท่านอีกครั้ง";
+                        return Json(response.Message);
                     }
                 }
                 if (idCardNumberCheck != null)
                 {
-                    message = "เลขบัตรประชาชนซ้ำ";
-                    return BadRequest(message);
+                    response.Message = "เลขบัตรประชาชนซ้ำ";
+                    return Json(response.Message);
+
                 }
-                
                 if (req.IdCardNumber.Length != 13)
                 {
-                    message = "เลขบัตรประชาชนให้ครบ13";
-                    return BadRequest(message);
+                    response.Message = "เลขบัตรประชาชนให้ครบ13";
+                    return Json(response.Message);
+
                 }
                 if (VerifyPeopleID(req.IdCardNumber))
                 {
-                    message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
-                    return BadRequest(message);
-
+                    response.Message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
+                    return Json(response.Message);
                 }
-                
+
+
 
                 IdentityUser aspnetUser = new IdentityUser();
                 aspnetUser.UserName = req.Username;
@@ -194,7 +185,7 @@ namespace CarWash.Areas.Account
                         user.AspNetUserId = aspnetUser.Id;
                         user.CreatedTime = DateTime.Now;
                         user.UpdatedTime = DateTime.Now;
-                        user.State = State.Offline;               
+                        user.State = State.Offline;
                         user.Role = req.Role;
                         user.Status = Status.InActive;
                         user.Code = RunnigCodeId(req.Role);
@@ -204,12 +195,15 @@ namespace CarWash.Areas.Account
                         user.IdCardNumber = req.IdCardNumber;
                         _context.User.Add(user);
                         _context.SaveChanges();
-                        success = true;
-                        message = "สมัครสมาชิกเรียบร้อยแล้ว";
-                        
-                       
-                        return Json(result);
+
+                        response.Success = true;
+                        response.Message = "Sign up success";
+                        return Json(response);
                     }
+                }
+                else
+                {
+                    return Json(result.Errors);
                 }
             }
             catch (Exception e)
@@ -225,15 +219,19 @@ namespace CarWash.Areas.Account
                         _context.User.Remove(user);
                         _context.SaveChanges();
                     }
+
+
                 }
                 return BadRequest(e.Message);
             }
+
+
             return Ok();
-            
+
         }
 
     }
-    
+
 
 }
 
