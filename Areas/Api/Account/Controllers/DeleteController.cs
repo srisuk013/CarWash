@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CarWash.Areas.Api.Models;
 using CarWash.Models.DBModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
+    [Area("Api")]
+
     public class DeleteController : Controller
     {
+
         private CarWashContext _context;
         private UserManager<IdentityUser> _userManager;
         private SignInManager<IdentityUser> _signInManager;
@@ -20,26 +24,32 @@ namespace CarWash.Areas.Api.Account.Controllers
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
-           
         }
 
-        public async Task<IActionResult> DeleteAsp()
+        [HttpPost]
+        public async Task<IActionResult> DeleteAsp([FromBody]DeleteAspNet delete)
         {
-             string aspNetDelete = "";
-            IdentityUser deleteUser = await _userManager.FindByNameAsync(aspNetDelete);
-            if (deleteUser != null)
+
+            IdentityUser deleteUser = await _userManager.FindByNameAsync(delete.Username);
+            string message = "";
+            if (deleteUser == null)
+            {
+                message = "ไม่มีUserName";
+                return BadRequest(message);
+            }
+            else if (deleteUser != null)
             {
                 IdentityResult result = await _userManager.DeleteAsync(deleteUser);
+
                 if (result == IdentityResult.Success)
                 {
-
-                
+                    User user = _context.User.Where(o => o.Username == delete.Username).FirstOrDefault();
+                    _context.User.Remove(user);
+                    _context.SaveChanges();
                 }
-                return Ok();
-
             }
             return Ok();
         }
-        
+
     }
 }

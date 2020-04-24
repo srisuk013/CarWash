@@ -165,8 +165,7 @@ namespace CarWash.Areas.Account
                     return BadRequest(message);
 
                 }
-                success = true;
-                message = "สมัครสมาชิกเรียบร้อยแล้ว";
+                
 
                 IdentityUser aspnetUser = new IdentityUser();
                 aspnetUser.UserName = req.Username;
@@ -205,6 +204,10 @@ namespace CarWash.Areas.Account
                         user.IdCardNumber = req.IdCardNumber;
                         _context.User.Add(user);
                         _context.SaveChanges();
+                        success = true;
+                        message = "สมัครสมาชิกเรียบร้อยแล้ว";
+                        
+                       
                         return Json(result);
                     }
                 }
