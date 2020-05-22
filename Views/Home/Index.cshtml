@@ -1,11 +1,38 @@
-﻿@{
+﻿<script src="https://www.gstatic.com/firebasejs/7.14.4/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.14.4/firebase-firestore.js"></script>
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+<script src="https://www.gstatic.com/firebasejs/7.14.4/firebase-analytics.js"></script>
+
+<script>
+    // Your web app's Firebase configuration
+    var firebaseConfig = {
+        apiKey: "AIzaSyAt4H4JTQ_GXb6TwCyZNR_YCA1XdQ8FdQQ",
+        authDomain: "carwash-293fb.firebaseapp.com",
+        databaseURL: "https://carwash-293fb.firebaseio.com",
+        projectId: "carwash-293fb",
+        storageBucket: "carwash-293fb.appspot.com",
+        messagingSenderId: "161925573793",
+        appId: "1:161925573793:web:d4975650a52cbfe40d14e0",
+        measurementId: "G-NREPR6NDE3"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+</script>
+
+
+@{
     ViewData["Title"] = "Home Page";
 }
+<ItemGroup>
+    <PackageReference Include="Google.Cloud.Firestore" Version="1.1.0-beta01" />
+</ItemGroup>
 
-    
 
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+

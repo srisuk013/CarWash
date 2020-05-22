@@ -17,6 +17,13 @@ using CarWash.Models.DBModels;
 using CarWash.Areas.Api;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Renci.SshNet.Messages;
+using CarWash.Areas.Api.Models;
+using CarWash.Service;
 
 namespace CarWash
 {
@@ -32,15 +39,30 @@ namespace CarWash
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            AppSettings.Secret = Configuration.GetSection("JWTKey").Value;
             services.AddDbContextPool<CarWashContext>(options =>
 options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User ID=srisuk013; Password=Srisuk1234"));
 
             services.AddDbContextPool<AppDbContext>(options =>
 options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User ID=srisuk013; Password=Srisuk1234"));
 
-            
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+     .AddJwtBearer(options =>
+     {
+         options.TokenValidationParameters = new TokenValidationParameters
+         {
+             ValidateIssuer = true,
+             ValidateAudience = true,
+             ValidateLifetime = true,
+             ValidateIssuerSigningKey = true,
+             ValidIssuer = Configuration["Jwt:Issuer"],
+             ValidAudience = Configuration["Jwt:Issuer"],
+             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+         };
+     });
 
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddDefaultIdentity<IdentityUser>()
                 .AddRoles<IdentityRole>()
          .AddEntityFrameworkStores<AppDbContext>();
             services.AddControllers()
@@ -48,19 +70,21 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             {
                 options.SerializerSettings.ContractResolver = new DefaultContractResolver();
             });
+            
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings.
                 options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireNonAlphanumeric =false;
-                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
                 options.Password.RequiredLength = 6;
                 options.Password.RequiredUniqueChars = 1;
-               // PasswordRequiresNonAlphanumeric
-
+                // PasswordRequiresNonAlphanumeric
+               
+                
                 // Lockout settings.
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
                 options.Lockout.MaxFailedAccessAttempts = 5;
@@ -72,16 +96,30 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                 options.User.RequireUniqueEmail = false;
             });
 
+
+
+            services.AddMvc();
+
             services.ConfigureApplicationCookie(options =>
             {
                 // Cookie settings
                 options.Cookie.HttpOnly = true;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
-
                 options.LoginPath = "/Identity/Account/Login";
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
                 options.SlidingExpiration = true;
+               
             });
+
+            // singleton
+            // scoped
+            // transient
+            services.AddScoped<ServiceToken>();
+            services.AddScoped<ServiceCheck>();
+            
+            services.AddScoped<CarWashAuthorization>();
+           
+
         }
 
 
@@ -104,7 +142,8 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
 
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
+
             app.UseEndpoints(endpoints =>
             {
                 Api_RouteConfig.Config(endpoints);
@@ -112,7 +151,10 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
+
             });
+
+
         }
 
     }

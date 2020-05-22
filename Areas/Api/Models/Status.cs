@@ -7,17 +7,20 @@ namespace CarWash.Areas.Api.Models
 {
     public class Status
     {
-            public const int Active = 1;
-            public const int InActive = 2;
-            
+        public const int Active = 1;
+        public const int InActive = 2;
+        public const int PendingApproval = 3;
 
-            public class Desc
-            {
-                public const string Active = "Active";
-                public const string InActive = "InActive";
-                
-            }
-       
-        
+
+        public class Desc
+        {
+            public const string Active = "Active";
+            public const string InActive = "InActive";
+            public const string PendingApproval = "PendingApproval";
+
+
+        }
+
+
     }
 }

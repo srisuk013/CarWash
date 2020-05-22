@@ -7,7 +7,6 @@ namespace CarWash.Models.DBModels
     public partial class CarWashContext : DbContext
     {
        
-
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -28,7 +27,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-       
+      
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<AspNetRoleClaims>(entity =>
@@ -142,11 +141,29 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Job>(entity =>
             {
-                entity.Property(e => e.JobApprove)
+                entity.Property(e => e.CodeJob)
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.Property(e => e.JobDate).HasColumnType("date");
+                entity.Property(e => e.ImageBack)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.ImageFront)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.ImageLeft)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.ImageRight)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.JobApprove)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Latitude).HasColumnType("decimal(18, 0)");
 
@@ -155,6 +172,10 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.StatusName)
                     .IsRequired()
                     .HasMaxLength(50);
+
+                entity.Property(e => e.comment)
+                    .IsRequired()
+                    .HasMaxLength(200);
             });
 
             modelBuilder.Entity<Package>(entity =>

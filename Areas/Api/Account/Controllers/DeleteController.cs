@@ -34,7 +34,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             string message = "";
             if (deleteUser == null)
             {
-                message = "ไม่มีUserName";
+                message = "ลบสำเร็จ";
                 return BadRequest(message);
             }
             else if (deleteUser != null)
