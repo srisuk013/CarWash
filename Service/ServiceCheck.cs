@@ -40,9 +40,7 @@ namespace CarWash.Service
             }
 
             return Check;
-
         }
-
         public static Boolean VerifyPeopleID(String pid)
         {
             string idc = pid.Substring(0, 12);
@@ -115,15 +113,6 @@ namespace CarWash.Service
             }
             return Check;
         }
-       /* public static Image ResizeImage(Image image,Size newsize)
-        {
-            Image newImage = new Bitmap(newsize.Width,newsize.Height);
-            using (Graphics GFX = Graphics.FromImage((Bitmap)newImage))
-            {
-                GFX.DrawImage(image, new System.Drawing.Rectangle(System.Drawing.Point.Empty,newsize));
-            }
-            return newImage;
-        }*/
         public static Boolean CheckState(int state)
         {
             bool Check = false;
@@ -165,7 +154,7 @@ namespace CarWash.Service
         /// <param name="width">The width to resize to.</param>
         /// <param name="height">The height to resize to.</param>
         /// <returns>The resized image.</returns>
-        public static Bitmap ResizeImage(Image image, int width, int height)
+        public static Image ResizeImage(Image image, int width, int height)
         {
             var destRect = new System.Drawing.Rectangle(0, 0, width, height);
             var destImage = new Bitmap(width, height);
@@ -189,10 +178,9 @@ namespace CarWash.Service
 
             return destImage;
         }
-        public static byte[] ImageToByte(Image img)
+        public static Image resizeImage(Image image,Size size)
         {
-            ImageConverter converter = new ImageConverter();
-            return (byte[])converter.ConvertTo(img, typeof(byte[]));
+            return (Image)(new Bitmap(image, size));
         }
     }
 }

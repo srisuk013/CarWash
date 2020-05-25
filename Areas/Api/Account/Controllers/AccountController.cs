@@ -420,7 +420,6 @@ namespace CarWash.Areas.Account
             return Ok();
         }
 
-
     }
 }
 

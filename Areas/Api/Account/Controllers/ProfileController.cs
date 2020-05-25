@@ -17,6 +17,7 @@ using System.Security.Claims;
 using User = CarWash.Models.DBModels.User;
 using CarWash.Service;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -29,7 +30,6 @@ namespace CarWash.Areas.Api.Account.Controllers
         private static string Bucket = "carwash-1e810.appspot.com";
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
-
         public ProfileController(CarWashContext context, IHostingEnvironment env)
         {
             _context = context;
@@ -46,15 +46,12 @@ namespace CarWash.Areas.Api.Account.Controllers
             {
                 string folderName = "FirebaseFiles";
                 string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
+
                 if(Directory.Exists(path))
                 {
                     using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
                     {
                         await file.CopyToAsync(fs);
-                   /*     using(var img = Image.FromStream(fs))
-                        {
-                            var newImage = ServiceCheck.ResizeImage(img, 200, 200);
-                        }*/
                     }
                     fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
                 }
@@ -62,26 +59,30 @@ namespace CarWash.Areas.Api.Account.Controllers
                 {
                     Directory.CreateDirectory(path);
                 }
-                /*var img = Image.FromStream(fs);
-                var newImage = ServiceCheck.ResizeImage(img, 200, 200);*/
+                var img = Image.FromStream(fs);
+                Size size = new Size(200, 200);
+                var newImage = ServiceCheck.resizeImage(img, size);
+                var stream = new System.IO.MemoryStream();
+                newImage.Save(stream, ImageFormat.Jpeg);
+                stream.Position = 0;
                 var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
                 var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
                 var cancellation = new CancellationTokenSource();
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
                 var upload = new FirebaseStorage(
                     Bucket,
                     new FirebaseStorageOptions
                     {
                         AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                        ThrowOnCancel = true // when you cancel the upload, exception is thrown. By default no exception is thrown
+                        ThrowOnCancel = true
                     })
                     .Child("Imageprofile")
-                    .Child($"{((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds()}")
-                    .PutAsync(fs, cancellation.Token);
+                    .Child($"{(Code)}.jpg")
+                    .PutAsync(stream, cancellation.Token);
                 try
                 {
-                    
                     var ImageUrl = await upload;
-                    string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                     String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                     int idName = int.Parse(Id);
                     User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
@@ -102,7 +103,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return BadRequest();
         }
-
 
     }
 
