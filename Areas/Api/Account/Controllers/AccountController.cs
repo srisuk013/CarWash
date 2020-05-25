@@ -419,7 +419,29 @@ namespace CarWash.Areas.Account
             }
             return Ok();
         }
-
+        [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult Report([FromBody] ReqComment req)
+        {
+            try
+            {
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int idName = int.Parse(Id);
+                Job job = _context.Job.Where(o => o.EmployeeId == idName).FirstOrDefault();
+                job.Report = req.Report;
+                _context.Job.Update(job);
+                _context.SaveChanges();
+                BaseResponse response = new BaseResponse();
+                response.Success = true;
+                response.Message = "แจ้งReportสำเร็จ";
+                return Json(response);
+            }
+            catch(Exception e)
+            {
+                return BadRequest();
+            }
+        }        
     }
 }
 

@@ -21,6 +21,6 @@ namespace CarWash.Models.DBModels
         public string ImageLeft { get; set; }
         public string ImageFront { get; set; }
         public string ImageBack { get; set; }
-        public string comment { get; set; }
+        public string Report { get; set; }
     }
 }

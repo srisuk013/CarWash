@@ -20,6 +20,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<AspNetUserTokens> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
         public virtual DbSet<Car> Car { get; set; }
+        public virtual DbSet<CarSize> CarSize { get; set; }
         public virtual DbSet<Job> Job { get; set; }
         public virtual DbSet<Package> Package { get; set; }
         public virtual DbSet<User> User { get; set; }
@@ -27,7 +28,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-      
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<AspNetRoleClaims>(entity =>
@@ -139,6 +140,19 @@ namespace CarWash.Models.DBModels
                     .HasMaxLength(50);
             });
 
+            modelBuilder.Entity<CarSize>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.Property(e => e.SizeName)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.price)
+                    .IsRequired()
+                    .HasMaxLength(10);
+            });
+
             modelBuilder.Entity<Job>(entity =>
             {
                 entity.Property(e => e.CodeJob)
@@ -169,13 +183,13 @@ namespace CarWash.Models.DBModels
 
                 entity.Property(e => e.Longitude).HasColumnType("decimal(18, 0)");
 
+                entity.Property(e => e.Report)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
                 entity.Property(e => e.StatusName)
                     .IsRequired()
                     .HasMaxLength(50);
-
-                entity.Property(e => e.comment)
-                    .IsRequired()
-                    .HasMaxLength(200);
             });
 
             modelBuilder.Entity<Package>(entity =>
