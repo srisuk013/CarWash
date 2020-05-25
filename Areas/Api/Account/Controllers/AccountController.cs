@@ -421,7 +421,7 @@ namespace CarWash.Areas.Account
         }
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
-        public IActionResult Report([FromBody] ReqComment req)
+        public IActionResult Report([FromBody] ReqReport req)
         {
             try
             {

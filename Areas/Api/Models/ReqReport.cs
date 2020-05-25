@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models
 {
-    public class ReqComment
+    public class ReqReport
     {
         public string Report { get; set; }
     }
