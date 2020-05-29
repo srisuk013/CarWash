@@ -5,7 +5,10 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models
 {
-    public class Class
+    public class ReqUserLogs
     {
+        public string LogsKeys { get; set; }
+
+        public int LogsStatus { get; set; }
     }
 }

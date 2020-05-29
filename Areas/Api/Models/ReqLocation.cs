@@ -7,8 +7,8 @@ namespace CarWash.Areas.Api.Models
 {
     public class ReqLocation
     {
-        public decimal latitude { get; set; }
-        public decimal longitude { get; set; }
+        public float latitude { get; set; }
+        public float longitude { get; set; }
 
 
     }

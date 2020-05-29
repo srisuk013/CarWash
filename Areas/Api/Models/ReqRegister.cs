@@ -23,7 +23,7 @@ namespace CarWash.Areas.Api.Models
 
         [RegularExpression(@"^([1-3])$", ErrorMessage = "ใส่เฉพาะตัวเลขRole")]
         public int Role { get; set; }
-        public IFormFile Image { get; set; }
+        public IFormFile file  { get; set; }
 
 
     }

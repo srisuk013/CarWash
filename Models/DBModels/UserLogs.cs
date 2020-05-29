@@ -9,6 +9,8 @@ namespace CarWash.Models.DBModels
         public int UserId { get; set; }
         public string LogsKey { get; set; }
         public DateTime DatetimeActiveIn { get; set; }
-        public DateTime DatetimeActiveOut { get; set; }
+        public DateTime? DatetimeActiveOut { get; set; }
+
+        public virtual User User { get; set; }
     }
 }

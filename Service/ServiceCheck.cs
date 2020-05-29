@@ -182,5 +182,6 @@ namespace CarWash.Service
         {
             return (Image)(new Bitmap(image, size));
         }
+       
     }
 }

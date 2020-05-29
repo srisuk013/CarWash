@@ -2,16 +2,23 @@
 using CarWash.Areas.Api.Models;
 using CarWash.Models.DBModels;
 using CarWash.Service;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.IO;
+using User = CarWash.Models.DBModels.User;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using System.Drawing;
+using System.Drawing.Imaging;
+using Firebase.Storage;
+using System.Threading;
+using System.Diagnostics;
+using Firebase.Auth;
+using Microsoft.AspNetCore.Hosting;
 
 namespace CarWash.Areas.Account
 {
@@ -22,6 +29,11 @@ namespace CarWash.Areas.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly CarWashContext _context;
+        private readonly IHostingEnvironment _env;
+        private static string ApiKey = "AIzaSyA0xBPLP9vDxXdbsQ1PYkBROfs4-vYvB1M";
+        private static string Bucket = "carwash-1e810.appspot.com";
+        private static string AuthEmail = "Srisuk013@gmail.com";
+        private static string AuthPassword = "ssss1111";
 
         public AccountController(CarWashContext context, UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager, ServiceToken service, ServiceCheck check, IHostingEnvironment env)
@@ -31,6 +43,7 @@ namespace CarWash.Areas.Account
             _signInManager = signInManager;
             Service = service;
             ServiceCheck = check;
+            _env = env;
         }
         public string RunnigCodeId(int role)
         {
@@ -156,7 +169,9 @@ namespace CarWash.Areas.Account
                         user.State = State.Offline;
                         user.Role = req.Role;
                         user.Status = Status.PendingApproval;
-                        user.Code = RunnigCodeId(req.Role);
+                        var CodeId = RunnigCodeId(req.Role);
+                        user.Code = CodeId;
+                        user.Image = await UpProfileAsync(req.file, CodeId);
                         user.FullName = req.FullName;
                         user.Username = req.Username;
                         user.Phone = req.Phone;
@@ -186,10 +201,9 @@ namespace CarWash.Areas.Account
                         _context.SaveChanges();
                     }
                 }
-                else
-                {
+              
                     return BadRequest(e.Message);
-                }
+                
             }
             return Ok(); ;
         }
@@ -216,16 +230,16 @@ namespace CarWash.Areas.Account
                     signInResponse.Message = "กรุณาตรวจสอบPassword";
                     return Json(signInResponse);
                 }
-                else if(ServiceCheck.CheckRole(login.Role)==false)
+                else if(ServiceCheck.CheckRole(login.Role) == false)
                 {
                     signInResponse.Message = "กรุณาตรวจสอบRoleให้ถูกต้อง";
                     return Json(signInResponse);
                 }
-                             IdentityUser aspnetUserCheck = await _userManager.FindByNameAsync(login.Username);
+                IdentityUser aspnetUserCheck = await _userManager.FindByNameAsync(login.Username);
                 User user = _context.User.Where(o => o.Username == login.Username && o.Role == login.Role).FirstOrDefault();
                 if(user == null)
                 {
-                    signInResponse.Message = "UserNameไม่ถูกต้อง";
+                    signInResponse.Message = "กรุณาตรวจสอบUserNameและPassword";
                     return Json(signInResponse);
                 }
                 else if(aspnetUserCheck == null)
@@ -391,6 +405,7 @@ namespace CarWash.Areas.Account
             }
             return Ok();
         }
+
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult SwitchSystem([FromBody] ReqSwitchSystem req)
@@ -415,10 +430,11 @@ namespace CarWash.Areas.Account
             }
             catch(Exception e)
             {
-         
+
             }
             return Ok();
         }
+
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult Report([FromBody] ReqReport req)
@@ -441,7 +457,170 @@ namespace CarWash.Areas.Account
             {
                 return BadRequest();
             }
-        }        
+        }
+
+        [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult UserLogs([FromBody] ReqUserLogs req)
+        {
+            if(String.IsNullOrEmpty(req.LogsKeys.ToString()))
+            {
+                return BadRequest();
+            }
+            else if(String.IsNullOrEmpty(req.LogsStatus.ToString()))
+            {
+                return BadRequest();
+            }
+            else if(req.LogsStatus != 1 && req.LogsStatus != 0)
+            {
+                return BadRequest();
+            }
+            try
+            {
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int idName = int.Parse(Id);
+                UserLogs user = new UserLogs();
+                if(req.LogsStatus == 1)
+                {
+                    user.UserId = idName;
+                    user.LogsKey = req.LogsKeys;
+                    user.DatetimeActiveIn = DateTime.Now;
+                    _context.UserLogs.Add(user);
+                }
+                else if(req.LogsStatus == 0)
+                {
+                    UserLogs logs = _context.UserLogs.Where(o => o.LogsKey == req.LogsKeys).FirstOrDefault();
+                    logs.DatetimeActiveOut = DateTime.Now;
+                    _context.UserLogs.Update(logs);
+                }
+                _context.SaveChanges();
+                BaseResponse response = new BaseResponse();
+                response.Success = true;
+                response.Message = "สำเร็จ";
+                return Json(response);
+
+            }
+            catch(Exception e)
+            {
+
+            }
+            return Ok();
+        }
+
+        public async Task<string> UpProfileAsync(IFormFile file, string code)
+        {
+            string ImageUrl = null;
+            FileStream fs = null;
+            if(file.Length > 0)
+            {
+                string folderName = "FirebaseFilesV1";
+                string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
+
+                if(Directory.Exists(path))
+                {
+                    using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
+                    {
+                        await file.CopyToAsync(fs);
+                    }
+                    fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
+                }
+                else
+                {
+                    Directory.CreateDirectory(path);
+                }
+                var img = Image.FromStream(fs);
+                Size size = new Size(200, 200);
+                var newImage = ServiceCheck.resizeImage(img, size);
+                var stream = new System.IO.MemoryStream();
+                newImage.Save(stream, ImageFormat.Jpeg);
+                stream.Position = 0;
+                var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
+                var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                var cancellation = new CancellationTokenSource();
+                var upload = new FirebaseStorage(
+                    Bucket,
+                    new FirebaseStorageOptions
+                    {
+                        AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                        ThrowOnCancel = true
+                    })
+                    .Child("Imageprofile")
+                    .Child($"{(code)}.jpg")
+                    .PutAsync(stream, cancellation.Token);
+                ImageUrl = await upload;
+            }
+            return ImageUrl;
+        }
+
+        [HttpPost]
+        [Route("/api/ChangeProfile")]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public async Task<IActionResult> ChangeProfileAsync([FromForm] IFormFile file)
+        {
+            FileStream fs = null;
+            try
+            {
+                if(file.Length > 0)
+                {
+                    string folderName = "FirebaseFilesV1";
+                    string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
+
+                    if(Directory.Exists(path))
+                    {
+                        using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
+                        {
+                            await file.CopyToAsync(fs);
+                        }
+                        fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
+                    }
+                    else
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+
+                    Image img = Image.FromStream(fs);
+                    Size size = new Size(200, 200);
+                    var newImage = ServiceCheck.resizeImage(img, size);
+                    var stream = new System.IO.MemoryStream();
+                    newImage.Save(stream, ImageFormat.Jpeg);
+                    stream.Position = 0;
+                    var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
+                    var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                    var cancellation = new CancellationTokenSource();
+                    string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                    String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
+                    var upload = new FirebaseStorage(
+                        Bucket,
+                        new FirebaseStorageOptions
+                        {
+                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                            ThrowOnCancel = true
+                        })
+                        .Child("Imageprofile")
+                        .Child($"{(Code)}.jpg")
+                        .PutAsync(stream, cancellation.Token);
+
+                        var ImageUrl = await upload;
+                        String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                        int idName = int.Parse(Id);
+                        CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                        user.Image = ImageUrl;
+                        _context.User.Update(user);
+                        _context.SaveChanges();
+                        BaseResponse response = new BaseResponse();
+                        response.Success = true;
+                        response.Message = "เปลี่ยนรูปสำเร็จ";
+                        return Json(response);
+
+                }
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex);
+            }
+            return BadRequest();
+        }
     }
 }
 

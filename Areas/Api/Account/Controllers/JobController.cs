@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -54,7 +55,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Json(response);
 
 
-           
+
         }
 
         [HttpPost]
@@ -67,7 +68,27 @@ namespace CarWash.Areas.Api.Account.Controllers
             response.Message = "Payment success";
             return Json(response);
         }
+        [HttpPost]
+        [Route("/api/history")]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult History()
+        {
+            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int idName = int.Parse(Id);
+            User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            IList myArryList = new ArrayList();
+            HistoryResponse historyResponse = new HistoryResponse();
+            JobHistory history = new JobHistory();
+
+   
+            historyResponse.Success = true;
+            historyResponse.Message = "";
+            historyResponse.History = history;
+            return Json(historyResponse);
 
 
+
+        }
     }
 }

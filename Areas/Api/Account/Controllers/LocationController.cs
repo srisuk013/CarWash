@@ -25,6 +25,7 @@ namespace CarWash.Areas.Api.Account.Controllers
 
         }
         [HttpPost]
+        [Route("/api/Location")]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult Location([FromBody]ReqLocation location)
         {
@@ -44,7 +45,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 int idName = int.Parse(Id);
                 User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
                 user.Latitude = location.latitude;
-                user.Longitude = location.latitude;
+                user.Longitude = location.longitude;
                 _context.User.Update(user);
                 _context.SaveChanges();
                 BaseResponse response = new BaseResponse();

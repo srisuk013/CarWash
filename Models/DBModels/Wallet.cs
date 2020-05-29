@@ -8,5 +8,7 @@ namespace CarWash.Models.DBModels
         public int WalletId { get; set; }
         public int UserId { get; set; }
         public string Balance { get; set; }
+
+        public virtual User User { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-       
+      
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -20,6 +20,8 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<AspNetUserTokens> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
         public virtual DbSet<Car> Car { get; set; }
+        public virtual DbSet<CarBrand> CarBrand { get; set; }
+        public virtual DbSet<CarModel> CarModel { get; set; }
         public virtual DbSet<CarSize> CarSize { get; set; }
         public virtual DbSet<Job> Job { get; set; }
         public virtual DbSet<Package> Package { get; set; }
@@ -28,7 +30,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-       
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<AspNetRoleClaims>(entity =>
@@ -123,94 +125,117 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Car>(entity =>
             {
-                entity.Property(e => e.Brand)
+                entity.Property(e => e.Image).HasMaxLength(200);
+
+                entity.Property(e => e.VehicleRegistration)
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.Property(e => e.CarNumber)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.HasOne(d => d.Brand)
+                    .WithMany(p => p.Car)
+                    .HasForeignKey(d => d.BrandId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Car_CarBrand");
+            });
 
-                entity.Property(e => e.Image)
-                    .IsRequired()
-                    .HasColumnType("image");
+            modelBuilder.Entity<CarBrand>(entity =>
+            {
+                entity.HasKey(e => e.BrandId);
 
-                entity.Property(e => e.Model)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.Property(e => e.BrandName).HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<CarModel>(entity =>
+            {
+                entity.HasKey(e => e.Model_Id);
+
+                entity.Property(e => e.ModelName).HasMaxLength(50);
+
+                entity.HasOne(d => d.Brand)
+                    .WithMany(p => p.CarModel)
+                    .HasForeignKey(d => d.BrandId)
+                    .HasConstraintName("FK_CarModel_CarBrand");
+
+                entity.HasOne(d => d.Size)
+                    .WithMany(p => p.CarModel)
+                    .HasForeignKey(d => d.SizeId)
+                    .HasConstraintName("FK_CarModel_CarSize");
             });
 
             modelBuilder.Entity<CarSize>(entity =>
             {
-                entity.HasNoKey();
+                entity.HasKey(e => e.SizeId);
 
                 entity.Property(e => e.SizeName)
                     .IsRequired()
                     .HasMaxLength(50);
-
-                entity.Property(e => e.price)
-                    .IsRequired()
-                    .HasMaxLength(10);
             });
 
             modelBuilder.Entity<Job>(entity =>
             {
-                entity.Property(e => e.CodeJob)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.Property(e => e.CodeJob).HasMaxLength(50);
 
-                entity.Property(e => e.ImageBack)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                entity.Property(e => e.ImageBack).HasMaxLength(200);
 
-                entity.Property(e => e.ImageFront)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                entity.Property(e => e.ImageFront).HasMaxLength(200);
 
-                entity.Property(e => e.ImageLeft)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                entity.Property(e => e.ImageLeft).HasMaxLength(200);
 
-                entity.Property(e => e.ImageRight)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                entity.Property(e => e.ImageRight).HasMaxLength(200);
 
-                entity.Property(e => e.JobApprove)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.Property(e => e.JobApprove).HasMaxLength(50);
 
-                entity.Property(e => e.Latitude).HasColumnType("decimal(18, 0)");
+                entity.Property(e => e.Report).HasMaxLength(200);
 
-                entity.Property(e => e.Longitude).HasColumnType("decimal(18, 0)");
+                entity.Property(e => e.StatusName).HasMaxLength(50);
 
-                entity.Property(e => e.Report)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                entity.HasOne(d => d.Car)
+                    .WithMany(p => p.Job)
+                    .HasForeignKey(d => d.CarId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Job_Car");
 
-                entity.Property(e => e.StatusName)
-                    .IsRequired()
-                    .HasMaxLength(50);
+                entity.HasOne(d => d.Employee)
+                    .WithMany(p => p.Job)
+                    .HasForeignKey(d => d.EmployeeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Job_User");
+
+                entity.HasOne(d => d.Package)
+                    .WithMany(p => p.Job)
+                    .HasForeignKey(d => d.PackageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Job_Package");
             });
 
             modelBuilder.Entity<Package>(entity =>
             {
-                entity.Property(e => e.Description)
-                    .IsRequired()
-                    .HasMaxLength(200);
+                entity.Property(e => e.PackageId).ValueGeneratedNever();
 
-                entity.Property(e => e.PackageImage)
-                    .IsRequired()
-                    .HasColumnType("image");
+                entity.Property(e => e.Description).HasMaxLength(200);
+
+                entity.Property(e => e.PackageImage).HasMaxLength(200);
 
                 entity.Property(e => e.PackageName)
                     .IsRequired()
                     .HasMaxLength(50);
+
+                entity.Property(e => e.Price)
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .IsFixedLength();
 
                 entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(50);
 
                 entity.Property(e => e.UpdateTime).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Size)
+                    .WithMany(p => p.Package)
+                    .HasForeignKey(d => d.SizeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Package_CarSize");
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -237,10 +262,6 @@ namespace CarWash.Models.DBModels
 
                 entity.Property(e => e.Image).HasMaxLength(450);
 
-                entity.Property(e => e.Latitude).HasColumnType("decimal(18, 0)");
-
-                entity.Property(e => e.Longitude).HasColumnType("decimal(18, 0)");
-
                 entity.Property(e => e.Phone)
                     .IsRequired()
                     .HasMaxLength(50);
@@ -255,6 +276,12 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.LogsKey)
                     .IsRequired()
                     .HasMaxLength(100);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.UserLogs)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UserLogs_User");
             });
 
             modelBuilder.Entity<Wallet>(entity =>
@@ -263,13 +290,19 @@ namespace CarWash.Models.DBModels
                     .IsRequired()
                     .HasMaxLength(100)
                     .IsUnicode(false);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Wallet)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Wallet_User");
             });
 
             modelBuilder.Entity<WalletLogs>(entity =>
             {
                 entity.Property(e => e.Amount).HasColumnType("decimal(18, 0)");
 
-                entity.Property(e => e.CConfirm)
+                entity.Property(e => e.Confirm)
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
@@ -278,6 +311,11 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.Type)
                     .HasMaxLength(50)
                     .IsUnicode(false);
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.WalletLogs)
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK_WalletLogs_User");
             });
 
             OnModelCreatingPartial(modelBuilder);

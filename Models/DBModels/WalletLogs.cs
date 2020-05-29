@@ -11,6 +11,8 @@ namespace CarWash.Models.DBModels
         public string Type { get; set; }
         public decimal? Amount { get; set; }
         public byte[] Image { get; set; }
-        public string CConfirm { get; set; }
+        public string Confirm { get; set; }
+
+        public virtual User User { get; set; }
     }
 }
