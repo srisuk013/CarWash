@@ -5,6 +5,11 @@ namespace CarWash.Models.DBModels
 {
     public partial class Job
     {
+        public Job()
+        {
+            OthrerImage = new HashSet<OthrerImage>();
+        }
+
         public int JobId { get; set; }
         public int CustomerId { get; set; }
         public int EmployeeId { get; set; }
@@ -22,9 +27,12 @@ namespace CarWash.Models.DBModels
         public string ImageBack { get; set; }
         public string Report { get; set; }
         public int Price { get; set; }
+        public string Comment { get; set; }
 
         public virtual Car Car { get; set; }
+        public virtual User Customer { get; set; }
         public virtual User Employee { get; set; }
         public virtual Package Package { get; set; }
+        public virtual ICollection<OthrerImage> OthrerImage { get; set; }
     }
 }

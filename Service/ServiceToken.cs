@@ -21,11 +21,10 @@ namespace CarWash.Service
 {
     public class ServiceToken
     {
-        private IConfiguration _configuration;
-        private readonly CarWashContext _context;
-        public ServiceToken(CarWashContext context)
+
+        public ServiceToken()
         {
-            _context = context;
+
         }
         public const string Token = "ToKen";
 

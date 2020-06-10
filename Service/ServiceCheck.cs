@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CarWash.Areas.Api.Models;
+using CarWash.Areas.Api.Models.ModelsConst;
+using CarWash.Models.DBModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using System;
@@ -15,22 +19,30 @@ using Size = System.Drawing.Size;
 
 namespace CarWash.Service
 {
+
     public class ServiceCheck
     {
+
+        private readonly CarWashContext _context;
+        public ServiceCheck(CarWashContext context)
+        {
+            _context = context;
+        }
         public static Boolean PhoneCheck(string phone)
         {
             bool Check = false;
-
+          
+            if(phone.Length != 10)
+            {
+                Check = true;
+            }
+            return Check;
+        }
+        public static Boolean PhoneCheck1(string phone)
+        {
+            bool Check = false;
             var prefix = phone.Substring(0, 2);
-            if (String.IsNullOrEmpty(phone))
-            {
-                Check = false;
-            }
-            else if (phone.Length != 10)
-            {
-                Check = false;
-            }
-            else if (prefix == "08" || prefix == "09" || prefix == "06")
+            if(prefix == "08" || prefix == "09" || prefix == "06")
             {
                 Check = true;
             }
@@ -38,15 +50,15 @@ namespace CarWash.Service
             {
                 Check = false;
             }
-
             return Check;
         }
+
         public static Boolean VerifyPeopleID(String pid)
         {
             string idc = pid.Substring(0, 12);
 
             int sumValue = 0;
-            for (int i = 0; i < idc.Length; i++)
+            for(int i = 0; i < idc.Length; i++)
             {
                 sumValue += (13 - i) * int.Parse(idc[i].ToString());
             }
@@ -57,35 +69,11 @@ namespace CarWash.Service
         public static Boolean CheckfluFullName(string FullName)
         {
             bool Check = false;
-            if (String.IsNullOrEmpty(FullName))
+            if(String.IsNullOrEmpty(FullName))
             {
                 Check = false;
             }
-            else if (FullName.Length < 2)
-            {
-                Check = false;
-            }
-            else if (FullName.Length < 3)
-            {
-                Check = false;
-            }
-            else if (FullName.Length < 4)
-            {
-                Check = false;
-            }
-            else if (FullName.Length < 5)
-            {
-                Check = false;
-            }
-            else if (FullName.Length < 6)
-            {
-                Check = false;
-            }
-            else if (FullName.Length < 7)
-            {
-                Check = false;
-            }
-            else if (FullName.Length < 8)
+            else if(FullName.Length < 8)
             {
                 Check = false;
             }
@@ -99,11 +87,11 @@ namespace CarWash.Service
         public static Boolean CheckPassWord(string PassWord)
         {
             bool Check = false;
-            if (String.IsNullOrEmpty(PassWord))
+            if(String.IsNullOrEmpty(PassWord))
             {
                 Check = false;
             }
-            else if (PassWord.Length < 8)
+            else if(PassWord.Length < 8)
             {
                 Check = false;
             }
@@ -116,11 +104,11 @@ namespace CarWash.Service
         public static Boolean CheckState(int state)
         {
             bool Check = false;
-            if (String.IsNullOrEmpty(state.ToString()))
+            if(String.IsNullOrEmpty(state.ToString()))
             {
                 Check = false;
             }
-            else if (state != 0 && state !=1)
+            else if(state != 0 && state != 1)
             {
                 Check = false;
             }
@@ -133,11 +121,11 @@ namespace CarWash.Service
         public static Boolean CheckRole(int Role)
         {
             bool Check = false;
-             if (String.IsNullOrEmpty(Role.ToString()))
+            if(String.IsNullOrEmpty(Role.ToString()))
             {
                 Check = false;
             }
-            else if (Role != 1 && Role != 3 && Role !=2)
+            else if(Role != 1 && Role != 3 && Role != 2)
             {
                 Check = false;
             }
@@ -161,7 +149,7 @@ namespace CarWash.Service
 
             destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
 
-            using (var graphics = Graphics.FromImage(destImage))
+            using(var graphics = Graphics.FromImage(destImage))
             {
                 graphics.CompositingMode = CompositingMode.SourceCopy;
                 graphics.CompositingQuality = CompositingQuality.HighQuality;
@@ -169,7 +157,7 @@ namespace CarWash.Service
                 graphics.SmoothingMode = SmoothingMode.HighQuality;
                 graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
-                using (var wrapMode = new ImageAttributes())
+                using(var wrapMode = new ImageAttributes())
                 {
                     wrapMode.SetWrapMode(WrapMode.TileFlipXY);
                     graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
@@ -178,10 +166,58 @@ namespace CarWash.Service
 
             return destImage;
         }
-        public static Image resizeImage(Image image,Size size)
+        public static Image resizeImage(Image image, Size size)
         {
             return (Image)(new Bitmap(image, size));
         }
-       
+        public static String Check(String phone, int? Id)
+        {
+            String code = null;
+
+            if(Id == Status.Active)
+            {
+                code = "เบอร์นี้มีผู้ใช้งานอยู่แล้ว";
+            }
+            else if(Id == Status.InActive)
+            {
+                code = "เบอร์นี้มีผู้ใช้งานอยู่แล้ว";
+            }
+            else if(Id == Status.PendingApproval)
+            {
+                code ="กรุณารอการอนุมัติ";
+            }
+            return code;
+        }
+        public static DateTime DateTime(long longdatetime)
+        {
+            long unixDate = longdatetime;
+            DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            DateTime date = start.AddMilliseconds(unixDate).ToLocalTime();
+            return date;
+        }
+        public static String CheckImage(int Id)
+        {
+            String folderNameImage = null;
+            if(Id==UpImage.Front)
+            {
+                folderNameImage = UpImage.Desc.Front;
+            }
+            else if(Id == UpImage.Back)
+            {
+                folderNameImage = UpImage.Desc.Back;
+            }
+            else if(Id == UpImage.Laft)
+            {
+                folderNameImage = UpImage.Desc.Left;
+            }
+            else if(Id == UpImage.Right)
+            {
+                folderNameImage = UpImage.Desc.Right;
+            }
+            return folderNameImage;
+
+        }
+      
+
     }
 }

@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models
 {
-    public class ReqChangeProfile
+    public class ReqNewPassword
     {
-        public string Image { get; set; }
+        public string OldPassword { get; set; }
+        public string NewPassword { get; set; }
     }
 }

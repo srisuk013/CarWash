@@ -17,7 +17,7 @@ namespace CarWash.Models.DBModels
         public DateTime? CreatedTime { get; set; }
         public DateTime? UpdateTime { get; set; }
         public string Description { get; set; }
-        public string Price { get; set; }
+        public double Price { get; set; }
         public string PackageImage { get; set; }
 
         public virtual CarSize Size { get; set; }

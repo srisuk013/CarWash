@@ -4,11 +4,6 @@
       "type": "mssql",
       "suggestion": "true",
       "ignored": "true"
-    },
-    "storage1": {
-      "type": "storage",
-      "suggestion": "true",
-      "ignored": "true"
     }
   }
 }

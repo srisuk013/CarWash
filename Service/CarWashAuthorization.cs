@@ -37,7 +37,7 @@ namespace CarWash.Areas.Api.Models
             {
                 Microsoft.Extensions.Primitives.StringValues authTokens;
                 filterContext.HttpContext.Request.Headers.TryGetValue("Authorization", out authTokens);
-                ServiceToken serviceToken = new ServiceToken(_context);
+                ServiceToken serviceToken = new ServiceToken();
 
 
                 var _token = authTokens.FirstOrDefault();
@@ -60,6 +60,7 @@ namespace CarWash.Areas.Api.Models
                             int idName = int.Parse(payload["user_id"].ToString());
                             var idNames = payload["user_id"].ToString();
                             var codename = payload["Code"].ToString();
+                            var username = payload["username"].ToString();
                             User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
                             if (user != null)
                             {
@@ -67,6 +68,7 @@ namespace CarWash.Areas.Api.Models
                                  {
                                      new Claim(ClaimTypes.NameIdentifier,idNames ),
                                      new Claim(ClaimTypes.PostalCode,codename),
+                                     new Claim(ClaimTypes.Name,username),
                                      
                                  };
                                 var appIdentity = new ClaimsIdentity(claims);

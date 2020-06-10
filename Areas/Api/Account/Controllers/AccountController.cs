@@ -1,27 +1,29 @@
 ﻿using CarWash.Areas.Api.Account.Controllers;
 using CarWash.Areas.Api.Models;
+using CarWash.Areas.Api.Models.Models;
+using CarWash.Areas.Api.Models.ModelsConst;
+using CarWash.Areas.Api.Models.ModelsReponse;
 using CarWash.Models.DBModels;
 using CarWash.Service;
+using Firebase.Auth;
+using Firebase.Storage;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using User = CarWash.Models.DBModels.User;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using System.IO;
-using Microsoft.AspNetCore.Http;
 using System.Drawing;
 using System.Drawing.Imaging;
-using Firebase.Storage;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading;
-using System.Diagnostics;
-using Firebase.Auth;
-using Microsoft.AspNetCore.Hosting;
+using System.Threading.Tasks;
 
 namespace CarWash.Areas.Account
 {
+
     [Area("Api")]
 
     public class AccountController : CarWashController
@@ -100,7 +102,7 @@ namespace CarWash.Areas.Account
                     response.Message = "กรุณาตรวจสอบPassword";
                     return Json(response);
                 }
-                User idCardNumberCheck = _context.User.Where(o => o.IdCardNumber == req.IdCardNumber).FirstOrDefault();
+                Models.DBModels.User idCardNumberCheck = _context.User.Where(o => o.IdCardNumber == req.IdCardNumber).FirstOrDefault();
                 if(String.IsNullOrEmpty(req.IdCardNumber))
                 {
                     response.Message = "กรุณากรอกIdCardNumber";
@@ -122,18 +124,28 @@ namespace CarWash.Areas.Account
                     response.Message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
                     return Json(response);
                 }
-                else if(ServiceCheck.PhoneCheck(req.Phone) == false)
+                if(String.IsNullOrEmpty(req.Phone))
                 {
-                    response.Message = "ตรวจสอบเบอร์";
+                    response.Message = "กรุณาใส่เบอร์";
                     return Json(response);
                 }
-                User phoneCheck = _context.User.Where(o => o.Phone == req.Phone).FirstOrDefault();
+                if(ServiceCheck.PhoneCheck(req.Phone) != false)
+                {
+                    response.Message = "กรุณาตรวจสอบเบอร์";
+                    return Json(response);
+                }
+                else if(ServiceCheck.PhoneCheck1(req.Phone) == false)
+                {
+                    response.Message = "กรุณาตรวจสอบเบอร์";
+                    return Json(response);
+                }
+                Models.DBModels.User phoneCheck = _context.User.Where(o => o.Phone == req.Phone).FirstOrDefault();
                 if(phoneCheck != null)
                 {
                     response.Message = "เบอร์นี้มีผู้ใช้งานแล้ว";
                     return Json(response);
                 }
-                if(ServiceCheck.CheckRole(req.Role) == false)
+                else if(ServiceCheck.CheckRole(req.Role) == false)
                 {
                     response.Message = "ตรวจสอบRole";
                     return Json(response);
@@ -161,12 +173,12 @@ namespace CarWash.Areas.Account
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);
                     if(roleResult == IdentityResult.Success)
                     {
-                        User user = new User();
+                        Models.DBModels.User user = new Models.DBModels.User();
                         user.AspNetRole = roleName;
                         user.AspNetUserId = aspnetUser.Id;
                         user.CreatedTime = DateTime.Now;
                         user.UpdatedTime = DateTime.Now;
-                        user.State = State.Offline;
+                        user.State = State.Off;
                         user.Role = req.Role;
                         user.Status = Status.PendingApproval;
                         var CodeId = RunnigCodeId(req.Role);
@@ -194,16 +206,16 @@ namespace CarWash.Areas.Account
                 if(deleteUser != null)
                 {
                     IdentityResult result = await _userManager.DeleteAsync(deleteUser);
-                    User user = _context.User.Where(o => o.Username == req.Username).FirstOrDefault();
+                    Models.DBModels.User user = _context.User.Where(o => o.Username == req.Username).FirstOrDefault();
                     if(user != null)
                     {
                         _context.User.Remove(user);
                         _context.SaveChanges();
                     }
                 }
-              
-                    return BadRequest(e.Message);
-                
+
+                return BadRequest(e.Message);
+
             }
             return Ok(); ;
         }
@@ -236,7 +248,7 @@ namespace CarWash.Areas.Account
                     return Json(signInResponse);
                 }
                 IdentityUser aspnetUserCheck = await _userManager.FindByNameAsync(login.Username);
-                User user = _context.User.Where(o => o.Username == login.Username && o.Role == login.Role).FirstOrDefault();
+                Models.DBModels.User user = _context.User.Where(o => o.Username == login.Username && o.Role == login.Role).FirstOrDefault();
                 if(user == null)
                 {
                     signInResponse.Message = "กรุณาตรวจสอบUserNameและPassword";
@@ -247,8 +259,8 @@ namespace CarWash.Areas.Account
                     signInResponse.Message = "UserNameไม่ถูกต้อง";
                     return Json(signInResponse);
                 }
-                User StatusCheck = _context.User.Where(o => o.Username == login.Username && o.Status == Status.InActive).FirstOrDefault();
-                User StatusCheck1 = _context.User.Where(o => o.Username == login.Username && o.Status == Status.PendingApproval).FirstOrDefault();
+                Models.DBModels.User StatusCheck = _context.User.Where(o => o.Username == login.Username && o.Status == Status.InActive).FirstOrDefault();
+                Models.DBModels.User StatusCheck1 = _context.User.Where(o => o.Username == login.Username && o.Status == Status.PendingApproval).FirstOrDefault();
                 if(StatusCheck != null)
                 {
                     return BadRequest();
@@ -316,7 +328,6 @@ namespace CarWash.Areas.Account
             }
         }
 
-
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public async Task<IActionResult> Logout()
@@ -349,7 +360,7 @@ namespace CarWash.Areas.Account
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
-                User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
                 UserInfo userInfo = new UserInfo();
                 userInfo.UserId = user.UserId;
                 userInfo.FullName = user.FullName;
@@ -374,15 +385,28 @@ namespace CarWash.Areas.Account
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult ChangePhone([FromBody] ReqChangePhone reqChangePhone)
         {
-
-            if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) == false)
+            BaseResponse response = new BaseResponse();
+            response.Success = false;
+            if(String.IsNullOrEmpty(reqChangePhone.Phone))
             {
-                return BadRequest();
+                response.Message = "กรุณาใส่เบอร์";
+                return Json(response);
             }
-            User phoneCheck = _context.User.Where(o => o.Phone == reqChangePhone.Phone).FirstOrDefault();
+            if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
+            {
+                response.Message = "กรุณาตรวจสอบเบอร์";
+                return Json(response);
+            }
+            else if(ServiceCheck.PhoneCheck1(reqChangePhone.Phone) == false)
+            {
+                response.Message = "กรุณาตรวจสอบเบอร์";
+                return Json(response);
+            }
+            Models.DBModels.User phoneCheck = _context.User.Where(o => o.Phone == reqChangePhone.Phone).FirstOrDefault();
             if(phoneCheck != null)
             {
-                return BadRequest();
+                response.Message = "มีผู้ใช้งานอยู่แล้ว";
+                return Json(response);
             }
             try
             {
@@ -390,11 +414,10 @@ namespace CarWash.Areas.Account
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
-                User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
                 user.Phone = reqChangePhone.Phone;
                 _context.User.Update(user);
                 _context.SaveChanges();
-                BaseResponse response = new BaseResponse();
                 response.Success = true;
                 response.Message = "เปลี่ยนเบอร์แล้ว";
                 return Json(response);
@@ -404,59 +427,6 @@ namespace CarWash.Areas.Account
 
             }
             return Ok();
-        }
-
-        [HttpPost]
-        [ServiceFilter(typeof(CarWashAuthorization))]
-        public IActionResult SwitchSystem([FromBody] ReqSwitchSystem req)
-        {
-            if(ServiceCheck.CheckState(req.State) == false)
-            {
-                return BadRequest();
-            }
-            try
-            {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                user.State = req.State;
-                _context.User.Update(user);
-                _context.SaveChanges();
-                BaseResponse response = new BaseResponse();
-                response.Success = true;
-                response.Message = "เปลียนstateสำเร็จ";
-                return Json(response);
-            }
-            catch(Exception e)
-            {
-
-            }
-            return Ok();
-        }
-
-        [HttpPost]
-        [ServiceFilter(typeof(CarWashAuthorization))]
-        public IActionResult Report([FromBody] ReqReport req)
-        {
-            try
-            {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Job job = _context.Job.Where(o => o.EmployeeId == idName).FirstOrDefault();
-                job.Report = req.Report;
-                _context.Job.Update(job);
-                _context.SaveChanges();
-                BaseResponse response = new BaseResponse();
-                response.Success = true;
-                response.Message = "แจ้งReportสำเร็จ";
-                return Json(response);
-            }
-            catch(Exception e)
-            {
-                return BadRequest();
-            }
         }
 
         [HttpPost]
@@ -554,9 +524,8 @@ namespace CarWash.Areas.Account
         }
 
         [HttpPost]
-        [Route("/api/ChangeProfile")]
         [ServiceFilter(typeof(CarWashAuthorization))]
-        public async Task<IActionResult> ChangeProfileAsync([FromForm] IFormFile file)
+        public async Task<IActionResult> ChangeProfile([FromForm] IFormFile file)
         {
             FileStream fs = null;
             try
@@ -601,17 +570,17 @@ namespace CarWash.Areas.Account
                         .Child($"{(Code)}.jpg")
                         .PutAsync(stream, cancellation.Token);
 
-                        var ImageUrl = await upload;
-                        String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                        int idName = int.Parse(Id);
-                        CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                        user.Image = ImageUrl;
-                        _context.User.Update(user);
-                        _context.SaveChanges();
-                        BaseResponse response = new BaseResponse();
-                        response.Success = true;
-                        response.Message = "เปลี่ยนรูปสำเร็จ";
-                        return Json(response);
+                    var ImageUrl = await upload;
+                    String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                    int idName = int.Parse(Id);
+                    CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                    user.Image = ImageUrl;
+                    _context.User.Update(user);
+                    _context.SaveChanges();
+                    BaseResponse response = new BaseResponse();
+                    response.Success = true;
+                    response.Message = "เปลี่ยนรูปสำเร็จ";
+                    return Json(response);
 
                 }
             }
@@ -620,6 +589,95 @@ namespace CarWash.Areas.Account
                 return BadRequest(ex);
             }
             return BadRequest();
+        }
+
+        [HttpPost]
+        public IActionResult CheckPhone([FromBody] ReqCheckPhone req)
+        {
+            BaseResponse response = new BaseResponse();
+            response.Success = false;
+            if(String.IsNullOrEmpty(req.Phone))
+            {
+                response.Message = "กรุณาใส่เบอร์";
+                return Json(response);
+            }
+            if(ServiceCheck.PhoneCheck(req.Phone) != false)
+            {
+                response.Message = "กรุณาตรวจสอบเบอร์";
+                return Json(response);
+            }
+            else if(ServiceCheck.PhoneCheck1(req.Phone) == false)
+            {
+                response.Message = "กรุณาตรวจสอบเบอร์";
+                return Json(response);
+            }
+            Models.DBModels.User phoneCheck = _context.User.Where(o => o.Phone == req.Phone).FirstOrDefault();
+            if(phoneCheck != null)
+            {
+                int? Id = phoneCheck.Status;
+                var Status = ServiceCheck.Check(req.Phone, Id);
+                response.Message = Status;
+                return Json(response);
+            }
+            else
+            {
+                response.Success = true;
+                response.Message = "สำเร็จ";
+                return Json(response);
+            }
+
+        }
+
+        [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public async Task<IActionResult> changePassword([FromBody] ReqNewPassword req)
+        {
+            BaseResponse response = new BaseResponse();
+            if(ServiceCheck.CheckPassWord(req.OldPassword) == false)
+            {
+                response.Message = "กรุณาใส่รหัสผ่านเดิมให้ถูกต้อง";
+                return Json(response);
+            }
+            else if(ServiceCheck.CheckPassWord(req.NewPassword) == false)
+            {
+                response.Message = "กรุณาใส่รหัสผ่าน";
+                return Json(response);
+            }
+            string userId = User.Claims.Where(o => o.Type == ClaimTypes.Name).FirstOrDefault()?.Value;
+            String username = User.FindFirst(ClaimTypes.Name).Value;
+           
+            var user = await _userManager.FindByNameAsync(username);
+
+            var result = await _userManager.ChangePasswordAsync(user, req.OldPassword, req.NewPassword);
+            if(result.Succeeded)
+            {
+               
+                response.Success = true;
+                response.Message = "เปลียนรหัสสำเร็จ";
+                return Json(response);
+            }
+            else
+            {
+                response.Success = false;
+                response.Message = "ตรวจสอบรหัสผ่านอีกครั้ง";
+                return Json(response);
+            }
+           
+        }
+
+        [HttpGet]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult Homescore()
+        {
+            HomeMK home = new HomeMK();
+            HomeMok homeMok = new HomeMok();
+            homeMok.Ratings = "4.98";
+            homeMok.Acceptance = "85.0%";
+            homeMok.Cancellation= "15.0%";
+            home.Success = true;
+            home.Message = "สำเร็จ";
+            home.HomeScore = homeMok;
+            return Json(home);
         }
     }
 }

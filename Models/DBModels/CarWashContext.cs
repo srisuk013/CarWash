@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-      
+    
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -24,12 +24,14 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<CarModel> CarModel { get; set; }
         public virtual DbSet<CarSize> CarSize { get; set; }
         public virtual DbSet<Job> Job { get; set; }
+        public virtual DbSet<OthrerImage> OthrerImage { get; set; }
         public virtual DbSet<Package> Package { get; set; }
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<UserLogs> UserLogs { get; set; }
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
+     
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -175,13 +177,15 @@ namespace CarWash.Models.DBModels
             {
                 entity.Property(e => e.CodeJob).HasMaxLength(50);
 
-                entity.Property(e => e.ImageBack).HasMaxLength(200);
+                entity.Property(e => e.Comment).HasMaxLength(1000);
 
-                entity.Property(e => e.ImageFront).HasMaxLength(200);
+                entity.Property(e => e.ImageBack).HasMaxLength(500);
 
-                entity.Property(e => e.ImageLeft).HasMaxLength(200);
+                entity.Property(e => e.ImageFront).HasMaxLength(500);
 
-                entity.Property(e => e.ImageRight).HasMaxLength(200);
+                entity.Property(e => e.ImageLeft).HasMaxLength(500);
+
+                entity.Property(e => e.ImageRight).HasMaxLength(500);
 
                 entity.Property(e => e.JobApprove).HasMaxLength(50);
 
@@ -195,17 +199,35 @@ namespace CarWash.Models.DBModels
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_Car");
 
+                entity.HasOne(d => d.Customer)
+                    .WithMany(p => p.JobCustomer)
+                    .HasForeignKey(d => d.CustomerId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Job_User1");
+
                 entity.HasOne(d => d.Employee)
-                    .WithMany(p => p.Job)
+                    .WithMany(p => p.JobEmployee)
                     .HasForeignKey(d => d.EmployeeId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Job_User");
+                    .HasConstraintName("FK_Job_User2");
 
                 entity.HasOne(d => d.Package)
                     .WithMany(p => p.Job)
                     .HasForeignKey(d => d.PackageId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_Package");
+            });
+
+            modelBuilder.Entity<OthrerImage>(entity =>
+            {
+                entity.HasKey(e => e.IdImage);
+
+                entity.Property(e => e.Image).HasMaxLength(500);
+
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.OthrerImage)
+                    .HasForeignKey(d => d.JobId)
+                    .HasConstraintName("FK_OthrerImage_Job");
             });
 
             modelBuilder.Entity<Package>(entity =>
@@ -219,11 +241,6 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.PackageName)
                     .IsRequired()
                     .HasMaxLength(50);
-
-                entity.Property(e => e.Price)
-                    .IsRequired()
-                    .HasMaxLength(10)
-                    .IsFixedLength();
 
                 entity.Property(e => e.Status)
                     .IsRequired()

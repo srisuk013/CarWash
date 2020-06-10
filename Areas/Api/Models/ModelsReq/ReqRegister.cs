@@ -25,9 +25,8 @@ namespace CarWash.Areas.Api.Models
         public int Role { get; set; }
         public IFormFile file  { get; set; }
 
-
     }
-   
+
 }
 
 

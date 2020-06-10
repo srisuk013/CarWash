@@ -7,7 +7,8 @@ namespace CarWash.Models.DBModels
     {
         public User()
         {
-            Job = new HashSet<Job>();
+            JobCustomer = new HashSet<Job>();
+            JobEmployee = new HashSet<Job>();
             UserLogs = new HashSet<UserLogs>();
             Wallet = new HashSet<Wallet>();
             WalletLogs = new HashSet<WalletLogs>();
@@ -30,7 +31,8 @@ namespace CarWash.Models.DBModels
         public int Role { get; set; }
         public int State { get; set; }
 
-        public virtual ICollection<Job> Job { get; set; }
+        public virtual ICollection<Job> JobCustomer { get; set; }
+        public virtual ICollection<Job> JobEmployee { get; set; }
         public virtual ICollection<UserLogs> UserLogs { get; set; }
         public virtual ICollection<Wallet> Wallet { get; set; }
         public virtual ICollection<WalletLogs> WalletLogs { get; set; }

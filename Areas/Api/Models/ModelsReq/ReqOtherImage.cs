@@ -1,15 +1,14 @@
 ﻿using Microsoft.AspNetCore.Http;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CarWash.Areas.Api.Models
+namespace CarWash.Areas.Api.Models.ModelsReq
 {
-    public class ImageUplode
+    public class ReqOtherImage
     {
-        public IFormFile  Image { get; set; }
-        
+        public IFormFile file { get; set; }
+      
     }
 }
