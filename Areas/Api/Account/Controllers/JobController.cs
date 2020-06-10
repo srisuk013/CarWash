@@ -137,22 +137,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return BadRequest();
         }
-
-        //[HttpGet]
-        //public IActionResult Job()
-        //{
-        //    string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-        //    String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-        //    int idName = int.Parse(Id);
-        //    Job job = _context.Job.Where(o => o.JobId == idName).FirstOrDefault();
-        //    job.CodeJob = RunnigJob();
-        //    _context.Job.Add(job);
-        //    _context.SaveChanges();
-        //    BaseResponse response = new BaseResponse();
-        //    response.Success = true;
-        //    response.Message = "เปลียนstateสำเร็จ";
-        //    return Json(response);
-        //}
         [HttpPost]
         public IActionResult Navigation([FromBody] ReqNavigation req)
         {
@@ -317,7 +301,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Ok();
         }
         [HttpPost]
-        public IActionResult SetStastus()
+        public IActionResult StatusService()
         {
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -332,7 +316,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Json(response);
         }
         [HttpPost]
-        public IActionResult SetStastuspayment()
+        public IActionResult Statuspayment()
         {
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -350,7 +334,53 @@ namespace CarWash.Areas.Api.Account.Controllers
             _context.SaveChanges();
             return Json(response);
         }
+        [HttpGet]
+        public IActionResult Homescore()
+        {
+            HomeMK home = new HomeMK();
+            HomeMok homeMok = new HomeMok();
+            homeMok.Ratings = "4.98";
+            homeMok.Acceptance = "85.0%";
+            homeMok.Cancellation = "15.0%";
+            home.Success = true;
+            home.Message = "สำเร็จ";
+            home.HomeScore = homeMok;
+            return Json(home);
+        }
+        [HttpPost]
+        public IActionResult Location([FromBody] ReqLocation location)
+        {
+            if(String.IsNullOrEmpty(location.latitude.ToString()))
+            {
+                return BadRequest();
+            }
+            else if(String.IsNullOrEmpty(location.longitude.ToString()))
+            {
+                return BadRequest();
+            }
 
+            try
+            {
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int idName = int.Parse(Id);
+                CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                user.Latitude = location.latitude;
+                user.Longitude = location.longitude;
+                _context.User.Update(user);
+                _context.SaveChanges();
+                BaseResponse response = new BaseResponse();
+                response.Success = true;
+                response.Message = "บันทึกตำแหน่ง";
+                return Json(response);
+            }
+            catch(Exception e)
+            {
+
+            }
+            return Ok();
+        }
     }
 
 }
+
