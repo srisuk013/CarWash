@@ -46,6 +46,11 @@ namespace CarWash.Areas.Api.Account.Controllers
             _env = env;
 
         }
+        public async Task<IActionResult>Deleteimageservice([FromBody] StatusServiceImage image)
+        {
+
+            return Ok();
+        }
         public string RunnigJob()
         {
             string code = "JOB";
@@ -88,9 +93,25 @@ namespace CarWash.Areas.Api.Account.Controllers
 
                 _context.Job.Update(userEmp);
                 _context.SaveChanges();
-                response.Success = true;
-                response.Message = "สำเร็จ";
-                return Json(response);
+                ImageServiceReponse responses = new ImageServiceReponse();
+                var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
+                ImageService jobs = new ImageService();
+                jobs.ImageFront = JobN.Select(o => o.ImageFront).FirstOrDefault();
+                jobs.ImageBack = JobN.Select(o => o.ImageBack).FirstOrDefault();
+                jobs.ImageLeft = JobN.Select(o => o.ImageLeft).FirstOrDefault();
+                jobs.ImageRight = JobN.Select(o => o.ImageRight).FirstOrDefault();
+                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == userEmp.JobId).ToList();
+                foreach(OthrerImage image in Jobimage)
+                {
+                    OtherImage otherImage = new OtherImage();
+                    otherImage.ImageId = image.ImageId;
+                    otherImage.Image = image.Image;
+                    jobs.OtherImages.Add(otherImage);
+                }
+                responses.Success = true;
+                responses.Message = "สำเร็จ";
+                responses.ServiceImage = jobs;
+                return Json(responses);
             }
             catch(Exception e)
             {
@@ -105,9 +126,9 @@ namespace CarWash.Areas.Api.Account.Controllers
         {
             BaseResponse response = new BaseResponse();
             response.Success = false;
-            if(req.ImageId < 1 || req.ImageId > 5)
+            if(req.ImageId < 0)
             {
-                response.Message = "ตัวเลขต้อง 1-5 เท่านั้น";
+                response.Message = "ไม่ได้ใส่ตัวเลข";
                 return Json(response);
             }
             try
@@ -115,15 +136,29 @@ namespace CarWash.Areas.Api.Account.Controllers
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
-                CarWash.Models.DBModels.Job userEmp = _context.Job.Where(o => o.EmployeeId == idName).FirstOrDefault();
-                var Job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).Include(o => o.OthrerImage).OrderByDescending(o => o.JobId);
-                OthrerImage othrer = _context.OthrerImage.Where(o => o.JobId == userEmp.JobId).OrderByDescending(o => o.JobId).FirstOrDefault();
-                _context.Remove(_context.OthrerImage.Single(a => a.ImageId == req.ImageId));
-                response.Success = true;
-                response.Message = "ลบสำเร็จ";
-                _context.Remove(othrer);
+                var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).Include(o => o.OthrerImage).OrderByDescending(o => o.JobId);
+                Job userEmp = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();              
+                OthrerImage othrer = _context.OthrerImage.Where(o => o.JobId == userEmp.JobId).FirstOrDefault();
+                _context.Remove(_context.OthrerImage.Single(a => a.ImageId == req.ImageId)); 
                 _context.SaveChanges();
-                return Json(response);
+                ImageServiceReponse responses = new ImageServiceReponse();
+                ImageService jobs = new ImageService();
+                jobs.ImageFront = JobN.Select(o => o.ImageFront).FirstOrDefault();
+                jobs.ImageBack = JobN.Select(o => o.ImageBack).FirstOrDefault();
+                jobs.ImageLeft = JobN.Select(o => o.ImageLeft).FirstOrDefault();
+                jobs.ImageRight = JobN.Select(o => o.ImageRight).FirstOrDefault();
+                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == othrer.JobId).ToList();
+                foreach(OthrerImage image in Jobimage)
+                {
+                    OtherImage otherImage = new OtherImage();
+                    otherImage.ImageId = image.ImageId;
+                    otherImage.Image = image.Image;
+                    jobs.OtherImages.Add(otherImage);
+                }
+                responses.Success = true;
+                responses.Message = "สำเร็จ";
+                responses.ServiceImage = jobs;
+                return Json(responses);
             }
             catch(Exception e)
             {
