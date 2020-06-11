@@ -53,6 +53,41 @@ namespace CarWash.Areas.Api.Account.Controllers
             string codeSum = DateTime.Now.ToString("yyMM") + countRunning.ToString().PadLeft(4, '0');
             return code + codeSum;
         }
+        [HttpGet]
+        public IActionResult Imageservice()
+        {
+            try
+            {
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int idName = int.Parse(Id);
+                Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+                ImageServiceReponse response = new ImageServiceReponse();
+                var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
+                .Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).ToList();
+                ImageService jobs = new ImageService();
+                jobs.ImageFront = job.ImageFront;
+                jobs.ImageBack = job.ImageBack;
+                jobs.ImageLeft = job.ImageLeft;
+                jobs.ImageRight = job.ImageRight;
+                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o=>o.JobId== job.JobId).ToList();
+                foreach(OthrerImage image in Jobimage)
+                {
+                    OtherImage otherImage = new OtherImage();
+                    otherImage.Image = image.Image;
+                    jobs.OtherImages.Add(otherImage);
+                }
+                response.Success = true;
+                response.Message = "สำเร็จ";
+                response.Images = jobs;
+                return Json(response);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex);
+            }
+            return BadRequest();
+        }
 
         [HttpPost]
         public async Task<IActionResult> Uploadimageservice([FromForm] StatusServiceImage image)
@@ -181,7 +216,7 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpGet]
-        public IActionResult History(long? DateBegin , long? DateEnd )
+        public IActionResult History(long? DateBegin, long? DateEnd)
         {
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -216,7 +251,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             DateTime datebegin = ServiceCheck.DateTime(DateBegin.Value);
             DateTime dateEnd = ServiceCheck.DateTime(DateEnd.Value);
             var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime >= datebegin && o.JobDateTime <= dateEnd).ToList();
+           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).ToList();
             foreach(Job HistoryJob in JobDb)
             {
                 JobHistory job = new JobHistory(HistoryJob);
@@ -316,7 +351,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Json(response);
         }
         [HttpPost]
-        public IActionResult Statuspayment()
+        public IActionResult PaymentJob()
         {
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -347,16 +382,16 @@ namespace CarWash.Areas.Api.Account.Controllers
             home.HomeScore = homeMok;
             return Json(home);
         }
+
         [HttpPost]
-        public IActionResult Location([FromBody] ReqLocation location)
+        public IActionResult ReportJob([FromBody] ReqReport req)
         {
-            if(String.IsNullOrEmpty(location.latitude.ToString()))
+            BaseResponse response = new BaseResponse();
+            if(String.IsNullOrEmpty(req.Report))
             {
-                return BadRequest();
-            }
-            else if(String.IsNullOrEmpty(location.longitude.ToString()))
-            {
-                return BadRequest();
+                response.Success = false;
+                response.Message = "ไม่ได้ใส่ข้อความ";
+                return Json(response);
             }
 
             try
@@ -365,13 +400,14 @@ namespace CarWash.Areas.Api.Account.Controllers
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
                 CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                user.Latitude = location.latitude;
-                user.Longitude = location.longitude;
+                Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+                job.Comment = req.Report;
+                user.State = State.On;
                 _context.User.Update(user);
+                _context.Job.Update(job);
                 _context.SaveChanges();
-                BaseResponse response = new BaseResponse();
                 response.Success = true;
-                response.Message = "บันทึกตำแหน่ง";
+                response.Message = "บันทึกข้อมูลสำเร็จ";
                 return Json(response);
             }
             catch(Exception e)
@@ -380,6 +416,9 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return Ok();
         }
+
+
+
     }
 
 }

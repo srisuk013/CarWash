@@ -433,17 +433,19 @@ namespace CarWash.Areas.Account
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult UserLogs([FromBody] ReqUserLogs req)
         {
-            if(String.IsNullOrEmpty(req.LogsKeys.ToString()))
+            BaseResponse response = new BaseResponse();
+
+            if(String.IsNullOrEmpty(req.LogsKeys))
             {
-                return BadRequest();
-            }
-            else if(String.IsNullOrEmpty(req.LogsStatus.ToString()))
-            {
-                return BadRequest();
+                response.Success = true;
+                response.Message = "ไม่ได้ใส่LogsKeys";
+                return Json(response);
             }
             else if(req.LogsStatus != 1 && req.LogsStatus != 0)
             {
-                return BadRequest();
+                response.Success = true;
+                response.Message = "LogsStatus มีค่า=0,1เท่านั้น";
+                return Json(response);
             }
             try
             {
@@ -465,7 +467,7 @@ namespace CarWash.Areas.Account
                     _context.UserLogs.Update(logs);
                 }
                 _context.SaveChanges();
-                BaseResponse response = new BaseResponse();
+
                 response.Success = true;
                 response.Message = "สำเร็จ";
                 return Json(response);
@@ -645,13 +647,13 @@ namespace CarWash.Areas.Account
             }
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.Name).FirstOrDefault()?.Value;
             String username = User.FindFirst(ClaimTypes.Name).Value;
-           
+
             var user = await _userManager.FindByNameAsync(username);
 
             var result = await _userManager.ChangePasswordAsync(user, req.OldPassword, req.NewPassword);
             if(result.Succeeded)
             {
-               
+
                 response.Success = true;
                 response.Message = "เปลียนรหัสสำเร็จ";
                 return Json(response);
@@ -662,7 +664,7 @@ namespace CarWash.Areas.Account
                 response.Message = "ตรวจสอบรหัสผ่านอีกครั้ง";
                 return Json(response);
             }
-           
+
         }
 
         [HttpGet]
@@ -673,12 +675,83 @@ namespace CarWash.Areas.Account
             HomeMok homeMok = new HomeMok();
             homeMok.Ratings = "4.98";
             homeMok.Acceptance = "85.0%";
-            homeMok.Cancellation= "15.0%";
+            homeMok.Cancellation = "15.0%";
             home.Success = true;
             home.Message = "สำเร็จ";
             home.HomeScore = homeMok;
             return Json(home);
         }
+        [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult Location([FromBody] ReqLocation location)
+        {
+            BaseResponse response = new BaseResponse();
+
+            if(location.latitude == 0)
+            {
+                response.Success = false;
+                response.Message = "ไม่ได้ใส่่ตำแหน่ง";
+                return Json(response);
+            }
+            else if(location.longitude == 0)
+            {
+                response.Success = false;
+                response.Message = "ไม่ได้ใส่่ตำแหน่ง";
+                return Json(response);
+            }
+
+            try
+            {
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int idName = int.Parse(Id);
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                user.Latitude = location.latitude;
+                user.Longitude = location.longitude;
+                _context.User.Update(user);
+                _context.SaveChanges();
+                response.Success = true;
+                response.Message = "บันทึกตำแหน่ง";
+                return Json(response);
+            }
+            catch(Exception e)
+            {
+
+            }
+            return Ok();
+        }
+
+        [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult SwitchSystem([FromBody] ReqSwitchSystem req)
+        {
+            BaseResponse response = new BaseResponse();
+            if(req.State != 1 && req.State != 0)
+            {
+                response.Success = false;
+                response.Message = "State มีค่า=0,1เท่านั้น";
+                return Json(response);
+            }
+            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int idName = int.Parse(Id);
+            Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            if(req.State == State.Off)
+            {
+                user.State = State.Off;
+            }
+            else if(req.State == State.On)
+            {
+                user.State = State.On;
+            }
+            _context.User.Update(user);
+            _context.SaveChanges();
+            response.Success = true;
+            response.Message = "สำเร็จ";
+            return Json(response);
+            
+        }
+
     }
 }
 

@@ -11,6 +11,7 @@ namespace CarWash.Areas.Api.Models.Models
         public string ImageBack { get; set; }
         public string ImageLeft { get; set; }
         public string ImageRight { get; set; }
+        public List <OtherImage> otherImages { get; set; }
 
 
     }

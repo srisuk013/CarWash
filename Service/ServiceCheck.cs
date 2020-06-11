@@ -193,7 +193,7 @@ namespace CarWash.Service
             long unixDate = longdatetime;
             DateTime start = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             DateTime date = start.AddMilliseconds(unixDate).ToLocalTime();
-            return date;
+            return date.Date;
         }
         public static String CheckImage(int Id)
         {

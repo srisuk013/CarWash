@@ -44,7 +44,7 @@ namespace CarWash.Areas.Api.Models
             this.Longitude = job.Longitude;
             this.VehicleRegistration = job.Car.VehicleRegistration;
             this.Price = "฿ " + job.Price +".00";
-            this.JobDateTime = job.JobDateTime;
+            this.JobDateTime = job.JobDateTime.Date;
             this.ImageFront = job.ImageFront;
             this.ImageBack = job.ImageBack;
             this.ImageLeft = job.ImageLeft;
