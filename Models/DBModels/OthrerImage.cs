@@ -5,7 +5,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class OthrerImage
     {
-        public int IdImage { get; set; }
+        public int ImageId { get; set; }
         public string Image { get; set; }
         public int? JobId { get; set; }
 

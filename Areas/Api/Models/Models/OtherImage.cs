@@ -7,6 +7,7 @@ namespace CarWash.Areas.Api.Models.Models
 {
     public class OtherImage
     {
+        public int ImageId { get; set; }
         public string Image { get; set; }
     }
 }

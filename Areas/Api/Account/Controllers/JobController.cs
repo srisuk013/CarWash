@@ -74,6 +74,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 foreach(OthrerImage image in Jobimage)
                 {
                     OtherImage otherImage = new OtherImage();
+                    otherImage.ImageId = image.ImageId;
                     otherImage.Image = image.Image;
                     jobs.OtherImages.Add(otherImage);
                 }
@@ -153,15 +154,23 @@ namespace CarWash.Areas.Api.Account.Controllers
                     _context.SaveChanges();
                     var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
                     .Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).ToList();
-                    ServiceImage service = new ServiceImage();
-                    service.ImageFront = job.ImageFront;
-                    service.ImageBack = job.ImageBack;
-                    service.ImageLeft = job.ImageLeft;
-                    service.ImageRight = job.ImageRight;
+                    ImageService jobs = new ImageService();
+                    jobs.ImageFront = job.ImageFront;
+                    jobs.ImageBack = job.ImageBack;
+                    jobs.ImageLeft = job.ImageLeft;
+                    jobs.ImageRight = job.ImageRight;
+                    List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
+                    foreach(OthrerImage images in Jobimage)
+                    {
+                        OtherImage otherImage = new OtherImage();
+                        otherImage.ImageId = images.ImageId;
+                        otherImage.Image = images.Image;
+                        jobs.OtherImages.Add(otherImage);
+                    }
                     UpImageResponse response = new UpImageResponse();
                     response.Success = true;
                     response.Message = "อัพรูปสำเร็จ";
-                    response.ServiceImage = service;
+                    response.ServiceImage = jobs;
                     return Json(response);
 
                 }

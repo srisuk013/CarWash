@@ -14,11 +14,11 @@ namespace CarWash.Areas.Api.Models.ModelsConst
         public const int OtherImage = 5;
         public class Desc
         {
-            public const string Front = "Front";
-            public const string Back = "Back";
-            public const string Left = "Left";
-            public const string Right = "Right";
-            public const string OtherImage = "OtherImage";
+            public const string Front = "ImageFront";
+            public const string Back = "ImageBack";
+            public const string Left = "ImageLeft";
+            public const string Right = "ImageRight";
+            public const string OtherImage = "ImageOtherImage";
 
         }
     }
