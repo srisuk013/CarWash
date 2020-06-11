@@ -57,6 +57,12 @@ namespace CarWash.Areas.Api.Account.Controllers
         public IActionResult DeleteServiceImage([FromBody] ReqDeleteImage req)
         {
             BaseResponse response = new BaseResponse();
+            response.Success = false;
+            if(req.ImageId < 1 || req.ImageId > 4)
+            {
+                response.Message = "ตัวเลขต้อง 1-4 เท่านั้น";
+                return Json(response);
+            }
             try
             {
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
@@ -98,6 +104,12 @@ namespace CarWash.Areas.Api.Account.Controllers
         public IActionResult DeleteServiceOhterImage([FromBody] ReqDeleteImage req)
         {
             BaseResponse response = new BaseResponse();
+            response.Success = false;
+            if(req.ImageId < 1 || req.ImageId > 5)
+            {
+                response.Message = "ตัวเลขต้อง 1-5 เท่านั้น";
+                return Json(response);
+            }
             try
             {
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
