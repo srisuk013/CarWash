@@ -53,6 +53,18 @@ namespace CarWash.Areas.Api.Account.Controllers
             string codeSum = DateTime.Now.ToString("yyMM") + countRunning.ToString().PadLeft(4, '0');
             return code + codeSum;
         }
+        [HttpPost]
+        public IActionResult DeleteImage([FromBody] ReqDeleteImage req)
+        {
+            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int idName = int.Parse(Id);
+            CarWash.Models.DBModels.User userEmp = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+        /*    var Job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).Include(o=>o.OthrerImage).OrderByDescending(o => o.JobId);
+             OthrerImage othrer =_context.OthrerImage.Where(o=>o.JobId)*/
+            return Ok();
+        }
+
         [HttpGet]
         public IActionResult Imageservice()
         {
@@ -63,13 +75,12 @@ namespace CarWash.Areas.Api.Account.Controllers
                 int idName = int.Parse(Id);
                 Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
                 ImageServiceReponse response = new ImageServiceReponse();
-                var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-                .Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).ToList();
+                var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
                 ImageService jobs = new ImageService();
-                jobs.ImageFront = job.ImageFront;
-                jobs.ImageBack = job.ImageBack;
-                jobs.ImageLeft = job.ImageLeft;
-                jobs.ImageRight = job.ImageRight;
+                jobs.ImageFront = JobN.Select(o => o.ImageFront).FirstOrDefault();
+                jobs.ImageBack = JobN.Select(o => o.ImageBack).FirstOrDefault();
+                jobs.ImageLeft = JobN.Select(o => o.ImageLeft).FirstOrDefault();
+                jobs.ImageRight = JobN.Select(o => o.ImageRight).FirstOrDefault();
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o=>o.JobId== job.JobId).ToList();
                 foreach(OthrerImage image in Jobimage)
                 {
@@ -246,6 +257,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                     foreach(OthrerImage image in Jobimage)
                     {
                         OtherImage otherImage = new OtherImage();
+                        otherImage.ImageId = image.ImageId;
                         otherImage.Image = image.Image;
                         job.OtherImages.Add(otherImage);
                     }
@@ -268,6 +280,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 foreach(OthrerImage image in Jobimage)
                 {
                     OtherImage otherImage = new OtherImage();
+                    otherImage.ImageId = image.ImageId;
                     otherImage.Image = image.Image;
                     job.OtherImages.Add(otherImage);
                 }
@@ -425,8 +438,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return Ok();
         }
-
-
 
     }
 
