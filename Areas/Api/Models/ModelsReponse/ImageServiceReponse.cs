@@ -6,12 +6,8 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.ModelsReponse
 {
-    public class ImageServiceReponse
+    public class ImageServiceReponse  : BaseResponse
     {
-        public bool Success { get; set; }
-
-        public string Message { get; set; }
-
-        public ImageService Images { get; set; }
+         public ImageService ServiceImage { get; set; }
     }
 }

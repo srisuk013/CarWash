@@ -8,10 +8,10 @@ namespace CarWash.Areas.Api.Models.Models
 {
     public class ImageService
     {
-        public string ImageRight;
-        public string ImageLeft;
         public string ImageFront;
         public string ImageBack;
+        public string ImageLeft;
+        public string ImageRight;
         public List<OtherImage> OtherImages;
 
         public ImageService()

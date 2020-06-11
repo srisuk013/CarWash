@@ -214,6 +214,10 @@ namespace CarWash.Service
             {
                 folderNameImage = UpImage.Desc.Right;
             }
+            else if(Id == UpImage.OtherImage)
+            {
+                folderNameImage = UpImage.Desc.OtherImage;
+            }
             return folderNameImage;
 
         }
