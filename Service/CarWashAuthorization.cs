@@ -35,6 +35,7 @@ namespace CarWash.Areas.Api.Models
           
             if (filterContext != null)
             {
+                Exception ex;
                 Microsoft.Extensions.Primitives.StringValues authTokens;
                 filterContext.HttpContext.Request.Headers.TryGetValue("Authorization", out authTokens);
                 ServiceToken serviceToken = new ServiceToken();
@@ -45,14 +46,15 @@ namespace CarWash.Areas.Api.Models
 
                 if (_token != null)
                 {
-                    Exception ex;
                     string authToken = _token;
-                    Dictionary<String, object> payload = ServiceToken.Decode(authToken, AppSettings.Secret, true);
+                   
+                  
 
                     if (authToken != null)
                     {
                         if (Verify(authToken, out ex))
                         {
+                            Dictionary<String, object> payload = ServiceToken.Decode(authToken, AppSettings.Secret, true);
                             filterContext.HttpContext.Response.Headers.Add("Authorization", authToken);
                             filterContext.HttpContext.Response.Headers.Add("AuthStatus", "Authorized");
                             filterContext.HttpContext.Response.Headers.Add("storeAccessiblity", "Authorized");

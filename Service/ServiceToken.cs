@@ -57,7 +57,6 @@ namespace CarWash.Service
             catch (TokenExpiredException ex)
             {
                 throw ex;
-
             }
             catch (SignatureVerificationException ex)
             {

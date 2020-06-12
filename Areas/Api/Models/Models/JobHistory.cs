@@ -3,6 +3,7 @@ using CarWash.Models.DBModels;
 using Microsoft.Extensions.Azure;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace CarWash.Areas.Api.Models
         public Double Longitude;
         public string VehicleRegistration;
         public string Price;
-        public DateTime JobDateTime;
+        public string JobDateTime;
         public string ImageRight;
         public string ImageLeft;
         public string ImageFront;
@@ -36,6 +37,8 @@ namespace CarWash.Areas.Api.Models
 
         public JobHistory(Job job)
         {
+            DateTime Date = job.JobDateTime;
+            string dateStr = Date.ToString("dd/MM/yyyy HH:mm");
             this.JobId = job.JobId;
             this.ImageProfile = job.Customer.Image;
             this.FullName = job.Customer.FullName;
@@ -43,14 +46,15 @@ namespace CarWash.Areas.Api.Models
             this.Latitude = job.Latitude;
             this.Longitude = job.Longitude;
             this.VehicleRegistration = job.Car.VehicleRegistration;
-            this.Price = "฿ " + job.Price +".00";
-            this.JobDateTime = job.JobDateTime.Date;
+            this.Price = "฿ "+ job.Price+".00";
+            this.JobDateTime = dateStr;
             this.ImageFront = job.ImageFront;
             this.ImageBack = job.ImageBack;
             this.ImageLeft = job.ImageLeft;
             this.ImageRight = job.ImageRight;
             this.Comment = job.Comment;
             this.OtherImages = new List<OtherImage>();
+           
         }
    
     }

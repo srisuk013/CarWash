@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -173,6 +174,7 @@ namespace CarWash.Areas.Account
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);
                     if(roleResult == IdentityResult.Success)
                     {
+                       
                         Models.DBModels.User user = new Models.DBModels.User();
                         user.AspNetRole = roleName;
                         user.AspNetUserId = aspnetUser.Id;
