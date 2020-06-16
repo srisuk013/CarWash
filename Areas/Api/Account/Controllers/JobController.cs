@@ -560,12 +560,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             _context.SaveChanges();
             return Json(response);
         }
-        [HttpGet]
-        public IActionResult Homescore()
-        {
-
-            return Ok();
-        }
 
         [HttpPost]
         public IActionResult ReportJob([FromBody] ReqReport req)
