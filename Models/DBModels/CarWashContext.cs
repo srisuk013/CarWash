@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-
+      
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -24,6 +24,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<CarBrand> CarBrand { get; set; }
         public virtual DbSet<CarModel> CarModel { get; set; }
         public virtual DbSet<CarSize> CarSize { get; set; }
+        public virtual DbSet<HomeScore> HomeScore { get; set; }
         public virtual DbSet<Job> Job { get; set; }
         public virtual DbSet<OthrerImage> OthrerImage { get; set; }
         public virtual DbSet<Package> Package { get; set; }
@@ -32,7 +33,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-
+      
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -172,6 +173,14 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.SizeName)
                     .IsRequired()
                     .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<HomeScore>(entity =>
+            {
+                entity.HasOne(d => d.Employee)
+                    .WithMany(p => p.HomeScore)
+                    .HasForeignKey(d => d.EmployeeId)
+                    .HasConstraintName("FK_HomeScore_User");
             });
 
             modelBuilder.Entity<Job>(entity =>

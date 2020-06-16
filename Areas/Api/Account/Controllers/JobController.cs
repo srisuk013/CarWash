@@ -46,7 +46,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             _env = env;
 
         }
-        public async Task<IActionResult>Deleteimageservice([FromBody] StatusServiceImage image)
+        public async Task<IActionResult> Deleteimageservice([FromBody] StatusServiceImage image)
         {
 
             return Ok();
@@ -137,9 +137,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
                 var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).Include(o => o.OthrerImage).OrderByDescending(o => o.JobId);
-                Job userEmp = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();              
+                Job userEmp = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
                 OthrerImage othrer = _context.OthrerImage.Where(o => o.JobId == userEmp.JobId).FirstOrDefault();
-                _context.Remove(_context.OthrerImage.Single(a => a.ImageId == req.ImageId)); 
+                _context.Remove(_context.OthrerImage.Single(a => a.ImageId == req.ImageId));
                 _context.SaveChanges();
                 ImageServiceReponse responses = new ImageServiceReponse();
                 ImageService jobs = new ImageService();
@@ -453,11 +453,40 @@ namespace CarWash.Areas.Api.Account.Controllers
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int idName = int.Parse(Id);
             JobRequset jobname = new JobRequset();
+            String date = DateTime.Now.ToString("ddMMyyyyHHmm");
+            int month = Convert.ToInt32(date.Substring(2, 2));
             JobRequestResponse jobRequest = new JobRequestResponse();
+            var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName );
+            HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == idName).FirstOrDefault();
+
             var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
             Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+            int sum = 1;
+            var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
+            if(dateMonth != month)
+            {
+                homeScore.Acceptance = null;
+                homeScore.Cancellation = null;
+                homeScore.MaxJob = null;
+                homeScore.Rating = null;
+                homeScore.CreatedTime = DateTime.Now;
+                _context.HomeScore.Update(homeScore);
+                _context.SaveChanges();
+            }
             if(status.JobStatus == 0)
             {
+                
+                if(homeScoreSum.Select(o => o.Cancellation).FirstOrDefault() == null)
+                {
+                    homeScore.Cancellation = 0;
+                    _context.HomeScore.Update(homeScore);
+                    _context.SaveChanges();
+                }
+                homeScore.Cancellation = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault() + sum;
+                homeScore.CreatedTime = DateTime.Now;
+                homeScore.MaxJob = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault() + sum;
+                _context.HomeScore.Update(homeScore);
+                _context.SaveChanges();
                 job.StatusName = JobStatus.Desc.RejectJob;
                 jobRequest.Success = false;
                 jobRequest.Message = "สำเร็จ";
@@ -468,6 +497,16 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             else if(status.JobStatus == 1)
             {
+                if(homeScoreSum.Select(o => o.Acceptance).FirstOrDefault() == null)
+                {
+                    homeScore.Acceptance = 0;
+                    _context.HomeScore.Update(homeScore);
+                    _context.SaveChanges();
+                }
+                homeScore.Acceptance = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault() + sum;
+                homeScore.MaxJob = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault() + sum;
+                _context.HomeScore.Update(homeScore);
+                _context.SaveChanges();
                 job.StatusName = JobStatus.Desc.ReceiveJob;
                 jobname.JobId = JobN.Select(o => o.JobId).FirstOrDefault();
                 jobname.FullName = JobN.Select(o => o.Customer.FullName).FirstOrDefault();
@@ -524,15 +563,8 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpGet]
         public IActionResult Homescore()
         {
-            HomeMK home = new HomeMK();
-            HomeMok homeMok = new HomeMok();
-            homeMok.Ratings = "4.98";
-            homeMok.Acceptance = "85.0%";
-            homeMok.Cancellation = "15.0%";
-            home.Success = true;
-            home.Message = "สำเร็จ";
-            home.HomeScore = homeMok;
-            return Json(home);
+
+            return Ok();
         }
 
         [HttpPost]
@@ -568,6 +600,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return Ok();
         }
+
 
     }
 

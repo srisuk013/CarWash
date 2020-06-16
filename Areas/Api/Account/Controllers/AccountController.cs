@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -174,7 +175,7 @@ namespace CarWash.Areas.Account
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);
                     if(roleResult == IdentityResult.Success)
                     {
-                       
+
                         Models.DBModels.User user = new Models.DBModels.User();
                         user.AspNetRole = roleName;
                         user.AspNetUserId = aspnetUser.Id;
@@ -673,15 +674,61 @@ namespace CarWash.Areas.Account
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult Homescore()
         {
-            HomeMK home = new HomeMK();
-            HomeMok homeMok = new HomeMok();
-            homeMok.Ratings = "4.98";
-            homeMok.Acceptance = "85.0%";
-            homeMok.Cancellation = "15.0%";
-            home.Success = true;
-            home.Message = "สำเร็จ";
-            home.HomeScore = homeMok;
-            return Json(home);
+            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int idName = int.Parse(Id);
+            String date = DateTime.Now.ToString("ddMMyyyyHHmm");
+            int day = Convert.ToInt32(date.Substring(0, 2));
+            int month = Convert.ToInt32(date.Substring(2, 2));
+            Job job = _context.Job.Where(o => o.EmployeeId == idName).FirstOrDefault();
+            var jobs = _context.Job.Include(o=>o.Employee).Include(o=>o.Customer).Where(o => o.EmployeeId == idName && o.JobDateTime.Month== month).FirstOrDefault();
+            var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName);
+            HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == idName).FirstOrDefault();
+            var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
+            var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
+            if(dateMonth != month)
+            {
+                homeScore.Acceptance = 0;
+                homeScore.Cancellation = 0;
+                homeScore.MaxJob = 0;
+                homeScore.Rating = 5.00;
+                homeScore.CreatedTime = DateTime.Now;
+                _context.HomeScore.Update(homeScore);
+                _context.SaveChanges();
+            }
+             else if(dateDay<day && dateMonth == month)
+            {
+                var jobSum = jobs.JobId.ToString().Count();
+                var CancellationSum =  homeScoreSum.Select(o => o.Cancellation).FirstOrDefault();
+                var AcceptanceSum = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault();
+                var MaxJobSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
+                var ScoreSum = homeScoreSum.Select(o => o.Score).FirstOrDefault();
+                var rating = homeScoreSum.Select(o => o.Rating).FirstOrDefault();
+                if(rating == null)
+                {
+                    homeScore.Rating = 0;
+                    _context.HomeScore.Update(homeScore);
+                    _context.SaveChanges();
+                }
+                HomeScoreModel model = new HomeScoreModel();
+                var ratings = ((ScoreSum / jobSum) * 100).ToString();
+                string ratingsSub1 = (ratings.Substring(0, 1));
+                string ratingsSub2 = (ratings.Substring(1, 1));
+                model.Ratings = ratingsSub1+"."+ ratingsSub2;
+                model.Cancellation = (CancellationSum/MaxJobSum)*100+"%";
+                model.Acceptance = (AcceptanceSum/MaxJobSum)*100+"%";
+                HomeScoreResponse home = new HomeScoreResponse();
+                home.Success = true;
+                home.Message = "สำเร็จ";
+                home.HomeScore = model;
+                return Json(home);
+
+            }
+
+
+
+
+            return Ok();
         }
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
@@ -751,7 +798,7 @@ namespace CarWash.Areas.Account
             response.Success = true;
             response.Message = "สำเร็จ";
             return Json(response);
-            
+
         }
 
     }

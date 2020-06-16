@@ -7,6 +7,7 @@ namespace CarWash.Models.DBModels
     {
         public User()
         {
+            HomeScore = new HashSet<HomeScore>();
             JobCustomer = new HashSet<Job>();
             JobEmployee = new HashSet<Job>();
             UserLogs = new HashSet<UserLogs>();
@@ -31,6 +32,7 @@ namespace CarWash.Models.DBModels
         public int Role { get; set; }
         public int State { get; set; }
 
+        public virtual ICollection<HomeScore> HomeScore { get; set; }
         public virtual ICollection<Job> JobCustomer { get; set; }
         public virtual ICollection<Job> JobEmployee { get; set; }
         public virtual ICollection<UserLogs> UserLogs { get; set; }
