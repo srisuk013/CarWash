@@ -8,6 +8,6 @@ namespace CarWash.Areas.Api.Models.ModelsReponse
 {
     public class ImageServiceReponse  : BaseResponse
     {
-         public ImageService ServiceImage { get; set; }
+         public ServiceImage ServiceImage { get; set; }
     }
 }

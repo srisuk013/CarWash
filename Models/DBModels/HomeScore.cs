@@ -9,7 +9,7 @@ namespace CarWash.Models.DBModels
         public double? Acceptance { get; set; }
         public double? Cancellation { get; set; }
         public double? Rating { get; set; }
-        public double? MaxJob { get; set; }
+        public int? MaxJob { get; set; }
         public int? EmployeeId { get; set; }
         public DateTime CreatedTime { get; set; }
         public int? Score { get; set; }

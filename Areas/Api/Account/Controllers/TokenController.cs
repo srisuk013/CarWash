@@ -24,22 +24,16 @@ namespace CarWash.Areas.Api.Account.Controllers
             Service = service;
         }
 
-        public DateTime UnixTimeToDateTime(long unixtime)
-        {
-            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddMilliseconds(unixtime).ToLocalTime();
-            return dtDateTime;
-        }
         [HttpPost]
-        public IActionResult RefreshToken([FromBody]ReqRefreshToken reqRefreshToken)
+        public IActionResult RefreshToken([FromBody] ReqRefreshToken reqRefreshToken)
         {
-            if (String.IsNullOrEmpty(reqRefreshToken.RefreshToken))
+            if(String.IsNullOrEmpty(reqRefreshToken.RefreshToken))
             {
                 return BadRequest();
             }
             Exception ex;
             var VerifyToken = CarWashAuthorization.Verify(reqRefreshToken.RefreshToken, out ex);
-            if (ex is TokenExpiredException)
+            if(ex is TokenExpiredException)
             {
                 BaseResponse baseResponse = new BaseResponse();
                 baseResponse.Success = false;
@@ -52,8 +46,8 @@ namespace CarWash.Areas.Api.Account.Controllers
             {
                 int idName = int.Parse(payload["user_id"].ToString());
                 User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                DateTime foo1 = DateTime.UtcNow.AddDays(7);
-                long unixTime1 = ((DateTimeOffset)foo1).ToUnixTimeSeconds();
+                DateTime dateToken = DateTime.UtcNow.AddDays(7);
+                long unixTimeToken = ((DateTimeOffset)dateToken).ToUnixTimeSeconds();
                 Dictionary<String, Object> payloadBody = new Dictionary<String, Object>
                     {
                         { "issuer" , "Carwash-wed-App"},
@@ -62,11 +56,11 @@ namespace CarWash.Areas.Api.Account.Controllers
                         { "username", user.Username},
                         { "user_id", user.UserId },
                         { "Code", user.Code },
-                        { "exp", unixTime1 },
+                        { "exp", unixTimeToken },
                         { "alg", "HS256"}
                     };
-                DateTime foo = DateTime.UtcNow.AddDays(8);
-                long unixTime = ((DateTimeOffset)foo).ToUnixTimeSeconds();
+                DateTime dateRefreshToken = DateTime.UtcNow.AddDays(8);
+                long unixTimeRefreshToken = ((DateTimeOffset)dateRefreshToken).ToUnixTimeSeconds();
                 Dictionary<String, Object> payloadBodyRe = new Dictionary<String, Object>
                     {
                         { "issuer" , "Carwash-wed-App"},
@@ -75,7 +69,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                         { "username", user.Username},
                         { "user_id", user.UserId },
                         { "Code", user.Code },
-                        { "exp", unixTime},
+                        { "exp", unixTimeRefreshToken},
                         { "alg", "HS256"}
                     };
                 SignInResponse signInResponse = new SignInResponse();
@@ -85,7 +79,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 signInResponse.RefreshToken = Service.Issue(payloadBodyRe);
                 return Json(signInResponse);
             }
-            catch (Exception e)
+            catch(Exception)
             {
 
             }

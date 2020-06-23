@@ -2,7 +2,6 @@
 using CarWash.Areas.Api.Models;
 using CarWash.Areas.Api.Models.Models;
 using CarWash.Areas.Api.Models.ModelsConst;
-using CarWash.Areas.Api.Models.ModelsReponse;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using Firebase.Auth;
@@ -16,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -33,12 +31,14 @@ namespace CarWash.Areas.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly CarWashContext _context;
+        [Obsolete]
         private readonly IHostingEnvironment _env;
         private static string ApiKey = "AIzaSyA0xBPLP9vDxXdbsQ1PYkBROfs4-vYvB1M";
         private static string Bucket = "carwash-1e810.appspot.com";
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
+        [Obsolete]
         public AccountController(CarWashContext context, UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager, ServiceToken service, ServiceCheck check, IHostingEnvironment env)
         {
@@ -88,13 +88,13 @@ namespace CarWash.Areas.Account
                     response.Message = "กรุณากรอกUser";
                     return Json(response);
                 }
-                IdentityUser aspnetUserCheck = await _userManager.FindByNameAsync(req.Username.ToLower());
+                IdentityUser aspnetUserCheckDb = await _userManager.FindByNameAsync(req.Username.ToLower());
                 if(req.Username.Length < 4)
                 {
                     response.Message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";
                     return Json(response);
                 }
-                else if(aspnetUserCheck != null)
+                else if(aspnetUserCheckDb != null)
                 {
                     response.Message = "มีผู้ใช้งานแล้ว";
                     return Json(response);
@@ -136,7 +136,7 @@ namespace CarWash.Areas.Account
                     response.Message = "กรุณาตรวจสอบเบอร์";
                     return Json(response);
                 }
-                else if(ServiceCheck.PhoneCheck1(req.Phone) == false)
+                else if(ServiceCheck.ValidatePhone(req.Phone) == false)
                 {
                     response.Message = "กรุณาตรวจสอบเบอร์";
                     return Json(response);
@@ -262,22 +262,23 @@ namespace CarWash.Areas.Account
                     signInResponse.Message = "UserNameไม่ถูกต้อง";
                     return Json(signInResponse);
                 }
-                Models.DBModels.User StatusCheck = _context.User.Where(o => o.Username == login.Username && o.Status == Status.InActive).FirstOrDefault();
-                Models.DBModels.User StatusCheck1 = _context.User.Where(o => o.Username == login.Username && o.Status == Status.PendingApproval).FirstOrDefault();
-                if(StatusCheck != null)
+                Models.DBModels.User StatusCheckInActive = _context.User.Where(o => o.Username == login.Username && o.Status == Status.InActive).FirstOrDefault();
+                Models.DBModels.User StatusCheckPendingApproval = _context.User.Where(o => o.Username == login.Username && o.Status == Status.PendingApproval).FirstOrDefault();
+                if(StatusCheckInActive != null)
                 {
-                    return BadRequest();
+                    signInResponse.Message = "User ของคุณอยู่ในสถานะ InActive ";
+                    return Json(signInResponse);
                 }
-                else if(StatusCheck1 != null)
+                else if(StatusCheckPendingApproval != null)
                 {
-                    return BadRequest();
-
+                    signInResponse.Message = "User ของคุณอยู่ในสถานะ PendingApproval ";
+                    return Json(signInResponse);
                 }
                 Microsoft.AspNetCore.Identity.SignInResult signInResult = await _signInManager.PasswordSignInAsync(aspnetUserCheck, login.Password, false, false);
                 if(signInResult.Succeeded)
                 {
-                    DateTime date = DateTime.UtcNow.AddDays(7);
-                    long unixTime1 = ((DateTimeOffset)date).ToUnixTimeSeconds();
+                    DateTime dateToken = DateTime.UtcNow.AddDays(7);
+                    long unixTime1 = ((DateTimeOffset)dateToken).ToUnixTimeSeconds();
                     Dictionary<String, Object> payloadBody = new Dictionary<String, Object>
                     {
                         { "issuer" , "Carwash-wed-App"},
@@ -289,8 +290,8 @@ namespace CarWash.Areas.Account
                         { "exp", unixTime1 },
                         { "alg", "HS256"}
                     };
-                    DateTime date1 = DateTime.UtcNow.AddDays(8);
-                    long unixTime = ((DateTimeOffset)date1).ToUnixTimeSeconds();
+                    DateTime dateRefreshToken = DateTime.UtcNow.AddDays(8);
+                    long unixTime = ((DateTimeOffset)dateRefreshToken).ToUnixTimeSeconds();
                     Dictionary<String, Object> payloadBodyRe = new Dictionary<String, Object>
                     {
                         { "issuer" , "Carwash-wed-App"},
@@ -347,7 +348,7 @@ namespace CarWash.Areas.Account
                 baseResponse.Success = true;
                 return Json(baseResponse);
             }
-            catch(Exception e)
+            catch(Exception)
             {
 
             }
@@ -377,7 +378,7 @@ namespace CarWash.Areas.Account
                 userInfoResponse.UserInfo = userInfo;
                 return Json(userInfoResponse);
             }
-            catch(Exception e)
+            catch(Exception)
             {
 
             }
@@ -400,13 +401,13 @@ namespace CarWash.Areas.Account
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
             }
-            else if(ServiceCheck.PhoneCheck1(reqChangePhone.Phone) == false)
+            else if(ServiceCheck.ValidatePhone(reqChangePhone.Phone) == false)
             {
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
             }
-            Models.DBModels.User phoneCheck = _context.User.Where(o => o.Phone == reqChangePhone.Phone).FirstOrDefault();
-            if(phoneCheck != null)
+            Models.DBModels.User CheckPhoneDb = _context.User.Where(o => o.Phone == reqChangePhone.Phone).FirstOrDefault();
+            if(CheckPhoneDb != null)
             {
                 response.Message = "มีผู้ใช้งานอยู่แล้ว";
                 return Json(response);
@@ -415,7 +416,7 @@ namespace CarWash.Areas.Account
             {
 
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
                 user.Phone = reqChangePhone.Phone;
@@ -425,7 +426,7 @@ namespace CarWash.Areas.Account
                 response.Message = "เปลี่ยนเบอร์แล้ว";
                 return Json(response);
             }
-            catch(Exception e)
+            catch(Exception)
             {
 
             }
@@ -453,7 +454,7 @@ namespace CarWash.Areas.Account
             try
             {
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
                 UserLogs user = new UserLogs();
                 if(req.LogsStatus == 1)
@@ -476,7 +477,7 @@ namespace CarWash.Areas.Account
                 return Json(response);
 
             }
-            catch(Exception e)
+            catch(Exception)
             {
 
             }
@@ -528,74 +529,7 @@ namespace CarWash.Areas.Account
             return ImageUrl;
         }
 
-        [HttpPost]
-        [ServiceFilter(typeof(CarWashAuthorization))]
-        public async Task<IActionResult> ChangeProfile([FromForm] IFormFile file)
-        {
-            FileStream fs = null;
-            try
-            {
-                if(file.Length > 0)
-                {
-                    string folderName = "FirebaseFilesV1";
-                    string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
-
-                    if(Directory.Exists(path))
-                    {
-                        using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
-                        {
-                            await file.CopyToAsync(fs);
-                        }
-                        fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
-                    }
-                    else
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-
-                    Image img = Image.FromStream(fs);
-                    Size size = new Size(200, 200);
-                    var newImage = ServiceCheck.resizeImage(img, size);
-                    var stream = new System.IO.MemoryStream();
-                    newImage.Save(stream, ImageFormat.Jpeg);
-                    stream.Position = 0;
-                    var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
-                    var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
-                    var cancellation = new CancellationTokenSource();
-                    string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                    String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
-                    var upload = new FirebaseStorage(
-                        Bucket,
-                        new FirebaseStorageOptions
-                        {
-                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                            ThrowOnCancel = true
-                        })
-                        .Child("Imageprofile")
-                        .Child($"{(Code)}.jpg")
-                        .PutAsync(stream, cancellation.Token);
-
-                    var ImageUrl = await upload;
-                    String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                    int idName = int.Parse(Id);
-                    CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                    user.Image = ImageUrl;
-                    _context.User.Update(user);
-                    _context.SaveChanges();
-                    BaseResponse response = new BaseResponse();
-                    response.Success = true;
-                    response.Message = "เปลี่ยนรูปสำเร็จ";
-                    return Json(response);
-
-                }
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(ex);
-            }
-            return BadRequest();
-        }
-
+      
         [HttpPost]
         public IActionResult CheckPhone([FromBody] ReqCheckPhone req)
         {
@@ -611,7 +545,7 @@ namespace CarWash.Areas.Account
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
             }
-            else if(ServiceCheck.PhoneCheck1(req.Phone) == false)
+            else if(ServiceCheck.ValidatePhone(req.Phone) == false)
             {
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
@@ -649,14 +583,11 @@ namespace CarWash.Areas.Account
                 return Json(response);
             }
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.Name).FirstOrDefault()?.Value;
-            String username = User.FindFirst(ClaimTypes.Name).Value;
-
+            string username = User.FindFirst(ClaimTypes.Name).Value;
             var user = await _userManager.FindByNameAsync(username);
-
             var result = await _userManager.ChangePasswordAsync(user, req.OldPassword, req.NewPassword);
             if(result.Succeeded)
             {
-
                 response.Success = true;
                 response.Message = "เปลียนรหัสสำเร็จ";
                 return Json(response);
@@ -667,66 +598,74 @@ namespace CarWash.Areas.Account
                 response.Message = "ตรวจสอบรหัสผ่านอีกครั้ง";
                 return Json(response);
             }
-
         }
 
         [HttpGet]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult Homescore()
         {
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
-            String date = DateTime.Now.ToString("ddMMyyyyHHmm");
-            int day = Convert.ToInt32(date.Substring(0, 2));
-            int month = Convert.ToInt32(date.Substring(2, 2));
-            Job job = _context.Job.Where(o => o.EmployeeId == idName).FirstOrDefault();
-            var jobs = _context.Job.Include(o=>o.Employee).Include(o=>o.Customer).Where(o => o.EmployeeId == idName && o.JobDateTime.Month== month).FirstOrDefault();
-            var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName);
-            HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == idName).FirstOrDefault();
-            var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
-            var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
-            if(dateMonth != month)
+            try
             {
-                homeScore.Acceptance = 0;
-                homeScore.Cancellation = 0;
-                homeScore.MaxJob = 0;
-                homeScore.Rating = 5.00;
-                homeScore.CreatedTime = DateTime.Now;
-                _context.HomeScore.Update(homeScore);
-                _context.SaveChanges();
-            }
-             else if(dateDay<day && dateMonth == month)
-            {
-                var jobSum = jobs.JobId.ToString().Count();
-                var CancellationSum =  homeScoreSum.Select(o => o.Cancellation).FirstOrDefault();
-                var AcceptanceSum = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault();
-                var MaxJobSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
-                var ScoreSum = homeScoreSum.Select(o => o.Score).FirstOrDefault();
-                var rating = homeScoreSum.Select(o => o.Rating).FirstOrDefault();
-                if(rating == null)
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int userId = int.Parse(Id);
+                String date = DateTime.Now.ToString("ddMMyyyyHHmm");
+                int day = Convert.ToInt32(date.Substring(0, 2));
+                int month = Convert.ToInt32(date.Substring(2, 2));
+                int year = Convert.ToInt32(date.Substring(4, 4));
+                Job jobdb = _context.Job.Where(o => o.EmployeeId == userId).FirstOrDefault();
+                var job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId && o.JobDateTime.Month == month).FirstOrDefault();
+                var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId);
+                HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == userId).FirstOrDefault();
+                var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
+                var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
+                var dateYear = homeScoreSum.Select(o => o.CreatedTime.Year).FirstOrDefault();
+                if(dateMonth != month)
                 {
-                    homeScore.Rating = 0;
+                    homeScore.Acceptance = 0;
+                    homeScore.Cancellation = 0;
+                    homeScore.MaxJob = 0;
+                    homeScore.Rating = 5.00;
+                    homeScore.CreatedTime = DateTime.Now;
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
                 }
-                HomeScoreModel model = new HomeScoreModel();
-                var ratings = ((ScoreSum / jobSum) * 100).ToString();
-                string ratingsSub1 = (ratings.Substring(0, 1));
-                string ratingsSub2 = (ratings.Substring(1, 1));
-                model.Ratings = ratingsSub1+"."+ ratingsSub2;
-                model.Cancellation = (CancellationSum/MaxJobSum)*100+"%";
-                model.Acceptance = (AcceptanceSum/MaxJobSum)*100+"%";
-                HomeScoreResponse home = new HomeScoreResponse();
-                home.Success = true;
-                home.Message = "สำเร็จ";
-                home.HomeScore = model;
-                return Json(home);
+                else if(dateMonth == month && dateYear == year)
+                {
+                    var jobSum = job.JobId.ToString().Count();
+                    var CancellationSum = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault();
+                    var AcceptanceSum = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault();
+                    var MaxJobSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
+                    var ScoreSum = homeScoreSum.Select(o => o.Score).FirstOrDefault();
+                    var rating = homeScoreSum.Select(o => o.Rating)?.FirstOrDefault();
+                    if(rating == null)
+                    {
+                        homeScore.Rating = 0;
+                        _context.HomeScore.Update(homeScore);
+                        _context.SaveChanges();
+                    }
+
+                    HomeScoreModel model = new HomeScoreModel();
+                    double? ratings = ((ScoreSum / jobSum));
+                    string ratingsSub1 = String.Format("{0:0}", ratings);
+                    model.Ratings = ratingsSub1+".00";
+                    double? Acceptances = ((AcceptanceSum / MaxJobSum) * 100);
+                    string str = String.Format("{0:0.00}%", Acceptances);
+                    model.Acceptance = str;
+                    var Cancellations = ((CancellationSum / MaxJobSum) * 100);
+                    string str1 = String.Format("{0:0.00}%", Cancellations);
+                    model.Cancellation = str1;
+                    HomeScoreResponse home = new HomeScoreResponse();
+                    home.Success = true;
+                    home.Message = "สำเร็จ";
+                    home.HomeScore = model;
+                    return Json(home);
+                }
+            }
+            catch(Exception)
+            {
 
             }
-
-
-
 
             return Ok();
         }
@@ -735,7 +674,6 @@ namespace CarWash.Areas.Account
         public IActionResult Location([FromBody] ReqLocation location)
         {
             BaseResponse response = new BaseResponse();
-
             if(location.latitude == 0)
             {
                 response.Success = false;
@@ -748,13 +686,12 @@ namespace CarWash.Areas.Account
                 response.Message = "ไม่ได้ใส่่ตำแหน่ง";
                 return Json(response);
             }
-
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int userId = int.Parse(Id);
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.Latitude = location.latitude;
                 user.Longitude = location.longitude;
                 _context.User.Update(user);
@@ -763,11 +700,11 @@ namespace CarWash.Areas.Account
                 response.Message = "บันทึกตำแหน่ง";
                 return Json(response);
             }
-            catch(Exception e)
+            catch(Exception)
             {
-
+                return BadRequest();
             }
-            return Ok();
+
         }
 
         [HttpPost]
@@ -781,10 +718,10 @@ namespace CarWash.Areas.Account
                 response.Message = "State มีค่า=0,1เท่านั้น";
                 return Json(response);
             }
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
-            Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userId = int.Parse(Id);
+            Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             if(req.State == State.Off)
             {
                 user.State = State.Off;
@@ -799,6 +736,73 @@ namespace CarWash.Areas.Account
             response.Message = "สำเร็จ";
             return Json(response);
 
+        }
+
+        [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public async Task<IActionResult> ChangeProfile([FromForm] IFormFile file)
+        {
+            FileStream fs = null;
+            try
+            {
+                if(file.Length > 0)
+                {
+                    string folderName = "FirebaseFilesV1";
+                    string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
+
+                    if(Directory.Exists(path))
+                    {
+                        using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
+                        {
+                            await file.CopyToAsync(fs);
+                        }
+                        fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
+                    }
+                    else
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    Image img = Image.FromStream(fs);
+                    Size size = new Size(200, 200);
+                    var newImage = ServiceCheck.ResizeImage(img, 200, 200);
+                    var stream = new System.IO.MemoryStream();
+                    newImage.Save(stream, ImageFormat.Jpeg);
+                    stream.Position = 0;
+                    var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
+                    var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                    var cancellation = new CancellationTokenSource();
+                    string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                    string Code = User.FindFirst(ClaimTypes.PostalCode).Value;
+                    var upload = new FirebaseStorage(
+                        Bucket,
+                        new FirebaseStorageOptions
+                        {
+                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                            ThrowOnCancel = true
+                        })
+                        .Child("Imageprofile")
+                        .Child($"{(Code)}.jpg")
+                        .PutAsync(stream, cancellation.Token);
+
+                    var ImageUrl = await upload;
+                    String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                    int idName = int.Parse(Id);
+                    CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                    user.Image = ImageUrl;
+                    _context.User.Update(user);
+                    _context.SaveChanges();
+                    BaseResponse response = new BaseResponse();
+                    response.Success = true;
+                    response.Message = "เปลี่ยนรูปสำเร็จ";
+                    return Json(response);
+
+                }
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex);
+            }
+            return BadRequest();
         }
 
     }

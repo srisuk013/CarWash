@@ -1,6 +1,5 @@
 ﻿using CarWash.Areas.Api.Models.Models;
 using CarWash.Models.DBModels;
-using Microsoft.Extensions.Azure;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,18 +20,20 @@ namespace CarWash.Areas.Api.Models
         public string VehicleRegistration;
         public string Price;
         public string JobDateTime;
-        public string ImageRight;
-        public string ImageLeft;
-        public string ImageFront;
-        public string ImageBack;
         public string Comment;
-        public List<OtherImage> OtherImages;
+        public List<OtherImage> OtherImageService;
+        public List<ImageSevices> ImageBeforeService;
+        public List<AfterImage> ImagesAfterService;
+
+
+
 
 
 
 
         public JobHistory()
         {
+           
         }
 
         public JobHistory(Job job)
@@ -48,12 +49,11 @@ namespace CarWash.Areas.Api.Models
             this.VehicleRegistration = job.Car.VehicleRegistration;
             this.Price = "฿ "+ job.Price+".00";
             this.JobDateTime = dateStr;
-            this.ImageFront = job.ImageFront;
-            this.ImageBack = job.ImageBack;
-            this.ImageLeft = job.ImageLeft;
-            this.ImageRight = job.ImageRight;
+            this.ImageBeforeService = new List<ImageSevices>();
             this.Comment = job.Comment;
-            this.OtherImages = new List<OtherImage>();
+            this.ImagesAfterService = new List<AfterImage>();
+            this.OtherImageService = new List<OtherImage>();
+
            
         }
    

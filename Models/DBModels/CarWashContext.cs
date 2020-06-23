@@ -6,8 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-      
-
+     
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -25,6 +24,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<CarModel> CarModel { get; set; }
         public virtual DbSet<CarSize> CarSize { get; set; }
         public virtual DbSet<HomeScore> HomeScore { get; set; }
+        public virtual DbSet<ImageSevice> ImageSevice { get; set; }
         public virtual DbSet<Job> Job { get; set; }
         public virtual DbSet<OthrerImage> OthrerImage { get; set; }
         public virtual DbSet<Package> Package { get; set; }
@@ -33,7 +33,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-      
+ 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -183,19 +183,37 @@ namespace CarWash.Models.DBModels
                     .HasConstraintName("FK_HomeScore_User");
             });
 
+            modelBuilder.Entity<ImageSevice>(entity =>
+            {
+                entity.HasKey(e => e.ImageId);
+
+                entity.Property(e => e.BackAfter).HasMaxLength(500);
+
+                entity.Property(e => e.BackBefore).HasMaxLength(500);
+
+                entity.Property(e => e.FrontAfter).HasMaxLength(500);
+
+                entity.Property(e => e.FrontBefore).HasMaxLength(500);
+
+                entity.Property(e => e.LaftAfter).HasMaxLength(500);
+
+                entity.Property(e => e.LaftBefore).HasMaxLength(500);
+
+                entity.Property(e => e.RightAfter).HasMaxLength(500);
+
+                entity.Property(e => e.RightBefore).HasMaxLength(500);
+
+                entity.HasOne(d => d.Job)
+                    .WithMany(p => p.ImageSevice)
+                    .HasForeignKey(d => d.JobId)
+                    .HasConstraintName("FK_ImageSevice_Job");
+            });
+
             modelBuilder.Entity<Job>(entity =>
             {
                 entity.Property(e => e.CodeJob).HasMaxLength(50);
 
                 entity.Property(e => e.Comment).HasMaxLength(1000);
-
-                entity.Property(e => e.ImageBack).HasMaxLength(500);
-
-                entity.Property(e => e.ImageFront).HasMaxLength(500);
-
-                entity.Property(e => e.ImageLeft).HasMaxLength(500);
-
-                entity.Property(e => e.ImageRight).HasMaxLength(500);
 
                 entity.Property(e => e.JobApprove).HasMaxLength(50);
 

@@ -38,7 +38,7 @@ namespace CarWash.Service
             }
             return Check;
         }
-        public static Boolean PhoneCheck1(string phone)
+        public static Boolean ValidatePhone(string phone)
         {
             bool Check = false;
             var prefix = phone.Substring(0, 2);
@@ -198,21 +198,37 @@ namespace CarWash.Service
         public static String CheckImage(int Id)
         {
             String folderNameImage = null;
-            if(Id==UpImage.Front)
+            if(Id==UpImage.FrontBefore)
             {
-                folderNameImage = UpImage.Desc.Front;
+                folderNameImage = UpImage.Desc.FrontBefore;
             }
-            else if(Id == UpImage.Back)
+            else if(Id == UpImage.BackBefore)
             {
-                folderNameImage = UpImage.Desc.Back;
+                folderNameImage = UpImage.Desc.BackBefore;
             }
-            else if(Id == UpImage.Laft)
+            else if(Id == UpImage.LaftBefore)
             {
-                folderNameImage = UpImage.Desc.Left;
+                folderNameImage = UpImage.Desc.LaftBefore;
             }
-            else if(Id == UpImage.Right)
+            else if(Id == UpImage.RightBefore)
             {
-                folderNameImage = UpImage.Desc.Right;
+                folderNameImage = UpImage.Desc.RightBefore;
+            }
+            else if(Id==UpImage.FrontAfter)
+            {
+                folderNameImage = UpImage.Desc.FrontAfter;
+            }
+            else if(Id == UpImage.BackAfter)
+            {
+                folderNameImage = UpImage.Desc.BackAfter;
+            }
+            else if(Id == UpImage.LaftAfter)
+            {
+                folderNameImage = UpImage.Desc.LaftAfter;
+            }
+            else if(Id == UpImage.RightAfter)
+            {
+                folderNameImage = UpImage.Desc.RightAfter;
             }
             else if(Id == UpImage.OtherImage)
             {
@@ -222,6 +238,44 @@ namespace CarWash.Service
 
         }
       
+        public static int CheckIntImage(int type)
+        {
+            int code = 0;
+
+            if(type == UpImage.FrontBefore)
+            {
+                code = UpImage.FrontBefore;
+            }
+            else if(type == UpImage.BackBefore)
+            {
+                code = UpImage.BackBefore;
+            }
+            else if(type == UpImage.LaftBefore)
+            {
+                code = UpImage.LaftBefore;
+            }
+            else if(type == UpImage.RightBefore)
+            {
+                code = UpImage.RightBefore;
+            }
+            else if(type == UpImage.FrontAfter)
+            {
+                code = UpImage.FrontAfter;
+            }
+            else if(type == UpImage.BackAfter)
+            {
+                code = UpImage.BackAfter;
+            }
+            else if(type == UpImage.LaftAfter)
+            {
+                code = UpImage.LaftAfter;
+            }
+            else if(type == UpImage.RightBefore)
+            {
+                code = UpImage.RightBefore;
+            }
+            return code;
+        }
 
     }
 }

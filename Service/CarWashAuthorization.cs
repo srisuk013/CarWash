@@ -60,15 +60,15 @@ namespace CarWash.Areas.Api.Models
                             filterContext.HttpContext.Response.Headers.Add("storeAccessiblity", "Authorized");
                             
                             int idName = int.Parse(payload["user_id"].ToString());
-                            var idNames = payload["user_id"].ToString();
-                            var codename = payload["Code"].ToString();
-                            var username = payload["username"].ToString();
+                            string Id = payload["user_id"].ToString();
+                            string codename = payload["Code"].ToString();
+                            string username = payload["username"].ToString();
                             User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
                             if (user != null)
                             {
                                 var claims = new List<Claim>
                                  {
-                                     new Claim(ClaimTypes.NameIdentifier,idNames ),
+                                     new Claim(ClaimTypes.NameIdentifier,Id ),
                                      new Claim(ClaimTypes.PostalCode,codename),
                                      new Claim(ClaimTypes.Name,username),
                                      

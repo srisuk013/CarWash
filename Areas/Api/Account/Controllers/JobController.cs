@@ -30,13 +30,14 @@ namespace CarWash.Areas.Api.Account.Controllers
         private CarWashContext _context;
         private UserManager<IdentityUser> _userManager;
         private SignInManager<IdentityUser> _signInManager;
-        private int idName;
+        [Obsolete]
         private readonly IHostingEnvironment _env;
         private static string ApiKey = "AIzaSyA0xBPLP9vDxXdbsQ1PYkBROfs4-vYvB1M";
         private static string Bucket = "carwash-1e810.appspot.com";
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
+        [Obsolete]
         public JobController(CarWashContext context, UserManager<IdentityUser> userManager,
            SignInManager<IdentityUser> signInManager, IHostingEnvironment env)
         {
@@ -44,82 +45,109 @@ namespace CarWash.Areas.Api.Account.Controllers
             _userManager = userManager;
             _signInManager = signInManager;
             _env = env;
-
         }
-        public async Task<IActionResult> Deleteimageservice([FromBody] StatusServiceImage image)
-        {
-
-            return Ok();
-        }
-        public string RunnigJob()
-        {
-            string code = "JOB";
-            int countRunning = _context.Job.Where(o => o.JobDateTime.Year == DateTime.Now.Year
-            && o.JobDateTime.Month == DateTime.Now.Month).Count() + 1;
-            string codeSum = DateTime.Now.ToString("yyMM") + countRunning.ToString().PadLeft(4, '0');
-            return code + codeSum;
-        }
+        [HttpPost]
         public IActionResult DeleteServiceImage([FromBody] ReqDeleteImage req)
         {
             BaseResponse response = new BaseResponse();
             response.Success = false;
-            if(req.ImageId < 1 || req.ImageId > 4)
+            if(req.ImageId == 0)
             {
-                response.Message = "ตัวเลขต้อง 1-4 เท่านั้น";
+                response.Message = "ไม่ได้ส่งตัวเลขมา";
+                return Json(response);
+            }
+            else if(req.ImageId < 1 || req.ImageId > 8)
+            {
+                response.Message = "ตัวเลขต้อง 1-8 เท่านั้น";
                 return Json(response);
             }
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Job userEmp = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
-                if(req.ImageId == UpImage.Front)
+                int userId = int.Parse(Id);
+                Job jobDb = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
+                ImageSevice imageSevice = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == jobDb.JobId).FirstOrDefault();
+                if(req.ImageId == UpImage.FrontBefore)
                 {
-                    userEmp.ImageFront = null;
+                    imageSevice.FrontBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
                 }
-                else if(req.ImageId == UpImage.Back)
+                else if(req.ImageId == UpImage.BackBefore)
                 {
-                    userEmp.ImageBack = null;
+                    imageSevice.BackBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
                 }
-                else if(req.ImageId == UpImage.Laft)
+                else if(req.ImageId == UpImage.LaftBefore)
                 {
-                    userEmp.ImageLeft = null;
+                    imageSevice.LaftBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
                 }
-                else if(req.ImageId == UpImage.Right)
+                else if(req.ImageId == UpImage.RightBefore)
                 {
-                    userEmp.ImageRight = null;
+                    imageSevice.RightBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
                 }
-
-                _context.Job.Update(userEmp);
-                _context.SaveChanges();
+                else if(req.ImageId == UpImage.FrontAfter)
+                {
+                    imageSevice.RightBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
+                }
+                else if(req.ImageId == UpImage.BackAfter)
+                {
+                    imageSevice.RightBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
+                }
+                else if(req.ImageId == UpImage.LaftAfter)
+                {
+                    imageSevice.RightBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
+                }
+                else if(req.ImageId == UpImage.RightAfter)
+                {
+                    imageSevice.RightBefore = null;
+                    _context.ImageSevice.Update(imageSevice);
+                    _context.SaveChanges();
+                }
                 ImageServiceReponse responses = new ImageServiceReponse();
-                var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
-                ImageService jobs = new ImageService();
-                jobs.ImageFront = JobN.Select(o => o.ImageFront).FirstOrDefault();
-                jobs.ImageBack = JobN.Select(o => o.ImageBack).FirstOrDefault();
-                jobs.ImageLeft = JobN.Select(o => o.ImageLeft).FirstOrDefault();
-                jobs.ImageRight = JobN.Select(o => o.ImageRight).FirstOrDefault();
-                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == userEmp.JobId).ToList();
+                ServiceImage service = new ServiceImage();
+                var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId);
+                var serviceDb = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == imageSevice.JobId);
+                service.FrontBefore = serviceDb.Select(o => o.FrontBefore).FirstOrDefault();
+                service.BackBefore = serviceDb.Select(o => o.BackBefore).FirstOrDefault();
+                service.LaftBefore = serviceDb.Select(o => o.LaftBefore).FirstOrDefault();
+                service.RightBefore = serviceDb.Select(o => o.RightBefore).FirstOrDefault();
+                service.FrontAfter = serviceDb.Select(o => o.FrontAfter).FirstOrDefault();
+                service.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
+                service.LaftAfter = serviceDb.Select(o => o.LaftAfter).FirstOrDefault();
+                service.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();
+                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == jobDb.JobId).ToList();
                 foreach(OthrerImage image in Jobimage)
                 {
                     OtherImage otherImage = new OtherImage();
                     otherImage.ImageId = image.ImageId;
                     otherImage.Image = image.Image;
-                    jobs.OtherImages.Add(otherImage);
+                    service.OtherImageSevice.Add(otherImage);
                 }
                 responses.Success = true;
                 responses.Message = "สำเร็จ";
-                responses.ServiceImage = jobs;
+                responses.ServiceImage = service;
                 return Json(responses);
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 response.Success = false;
                 response.Message = "ไม่สำเร็จ";
                 return Json(response);
             }
-            return Ok();
+
         }
         [HttpPost]
         public IActionResult DeleteServiceOhterImage([FromBody] ReqDeleteImage req)
@@ -133,40 +161,45 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).Include(o => o.OthrerImage).OrderByDescending(o => o.JobId);
-                Job userEmp = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
-                OthrerImage othrer = _context.OthrerImage.Where(o => o.JobId == userEmp.JobId).FirstOrDefault();
+                int userId = int.Parse(Id);
+                var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId).Include(o => o.OthrerImage).Include(o => o.ImageSevice).OrderByDescending(o => o.JobId);
+                Job userEmp = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
                 _context.Remove(_context.OthrerImage.Single(a => a.ImageId == req.ImageId));
                 _context.SaveChanges();
                 ImageServiceReponse responses = new ImageServiceReponse();
-                ImageService jobs = new ImageService();
-                jobs.ImageFront = JobN.Select(o => o.ImageFront).FirstOrDefault();
-                jobs.ImageBack = JobN.Select(o => o.ImageBack).FirstOrDefault();
-                jobs.ImageLeft = JobN.Select(o => o.ImageLeft).FirstOrDefault();
-                jobs.ImageRight = JobN.Select(o => o.ImageRight).FirstOrDefault();
-                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == othrer.JobId).ToList();
+                ServiceImage service = new ServiceImage();
+                ImageSevice imageSevice = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == userEmp.JobId).FirstOrDefault();
+                var serviceDb = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == imageSevice.JobId);
+                service.FrontBefore = serviceDb.Select(o => o.FrontBefore).FirstOrDefault();
+                service.BackBefore = serviceDb.Select(o => o.BackBefore).FirstOrDefault();
+                service.LaftBefore = serviceDb.Select(o => o.LaftBefore).FirstOrDefault();
+                service.RightBefore = serviceDb.Select(o => o.RightBefore).FirstOrDefault();
+                service.FrontAfter = serviceDb.Select(o => o.FrontAfter).FirstOrDefault();
+                service.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
+                service.LaftAfter = serviceDb.Select(o => o.LaftAfter).FirstOrDefault();
+                service.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();
+                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == userEmp.JobId).ToList();
                 foreach(OthrerImage image in Jobimage)
                 {
                     OtherImage otherImage = new OtherImage();
                     otherImage.ImageId = image.ImageId;
                     otherImage.Image = image.Image;
-                    jobs.OtherImages.Add(otherImage);
+                    service.OtherImageSevice.Add(otherImage);
                 }
                 responses.Success = true;
                 responses.Message = "สำเร็จ";
-                responses.ServiceImage = jobs;
+                responses.ServiceImage = service;
                 return Json(responses);
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 response.Success = false;
                 response.Message = "ไม่พบImageId";
                 return Json(response);
             }
-            return Ok();
+
         }
 
         [HttpGet]
@@ -174,38 +207,45 @@ namespace CarWash.Areas.Api.Account.Controllers
         {
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+                int userId = int.Parse(Id);
+                Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
                 ImageServiceReponse response = new ImageServiceReponse();
-                var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
-                ImageService jobs = new ImageService();
-                jobs.ImageFront = JobN.Select(o => o.ImageFront).FirstOrDefault();
-                jobs.ImageBack = JobN.Select(o => o.ImageBack).FirstOrDefault();
-                jobs.ImageLeft = JobN.Select(o => o.ImageLeft).FirstOrDefault();
-                jobs.ImageRight = JobN.Select(o => o.ImageRight).FirstOrDefault();
+                ImageSevice service = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == job.JobId).FirstOrDefault();
+                var serviceDb = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == job.JobId);
+                var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId).Include(o => o.ImageSevice).OrderByDescending(o => o.JobId);
+                ServiceImage imageservice = new ServiceImage();
+                imageservice.FrontBefore = serviceDb.Select(o => o.FrontBefore).FirstOrDefault();
+                imageservice.BackBefore = serviceDb.Select(o => o.BackBefore).FirstOrDefault();
+                imageservice.LaftBefore = serviceDb.Select(o => o.LaftBefore).FirstOrDefault();
+                imageservice.RightBefore = serviceDb.Select(o => o.RightBefore).FirstOrDefault();
+                imageservice.FrontAfter = serviceDb.Select(o => o.FrontAfter).FirstOrDefault();
+                imageservice.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
+                imageservice.LaftAfter = serviceDb.Select(o => o.LaftAfter).FirstOrDefault();
+                imageservice.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
                 foreach(OthrerImage image in Jobimage)
                 {
                     OtherImage otherImage = new OtherImage();
                     otherImage.ImageId = image.ImageId;
                     otherImage.Image = image.Image;
-                    jobs.OtherImages.Add(otherImage);
+                    imageservice.OtherImageSevice.Add(otherImage);
                 }
                 response.Success = true;
                 response.Message = "สำเร็จ";
-                response.ServiceImage = jobs;
+                response.ServiceImage = imageservice;
                 return Json(response);
             }
             catch(Exception ex)
             {
                 return BadRequest(ex);
             }
-            return BadRequest();
+
         }
 
         [HttpPost]
+        [Obsolete]
         public async Task<IActionResult> Uploadimageservice([FromForm] StatusServiceImage image)
         {
             FileStream fs = null;
@@ -237,18 +277,50 @@ namespace CarWash.Areas.Api.Account.Controllers
                     var nameImage = ServiceCheck.CheckImage(image.StatusService);
                     Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
                     OthrerImage other = new OthrerImage();
+                    ImageSevice service = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == job.JobId).FirstOrDefault();
+                    var serviceDb = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == job.JobId);
                     string name = null;
                     DateTime date = DateTime.UtcNow.AddDays(7);
                     long unixTime = ((DateTimeOffset)date).ToUnixTimeSeconds();
-                    if(image.StatusService >= 1 && image.StatusService <= 4)
+                    if(image.StatusService >= 1 && image.StatusService <= 8)
                     {
-                        name = job.JobId.ToString(); ;
+                        if(image.StatusService == UpImage.FrontBefore)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.FrontBefore;
+                        }
+                        else if(image.StatusService == UpImage.BackBefore)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.BackBefore;
+                        }
+                        else if(image.StatusService == UpImage.LaftBefore)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.LaftBefore;
+                        }
+                        else if(image.StatusService == UpImage.RightBefore)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.RightBefore;
+                        }
+                        else if(image.StatusService == UpImage.FrontAfter)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.FrontAfter;
+                        }
+                        else if(image.StatusService == UpImage.BackAfter)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.BackAfter;
+                        }
+                        else if(image.StatusService == UpImage.LaftAfter)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.LaftAfter;
+                        }
+                        else if(image.StatusService == UpImage.BackAfter)
+                        {
+                            name = job.JobId.ToString() + UpImage.Desc.RightAfter;
+                        }
                     }
                     else
                     {
                         name = job.JobId + unixTime.ToString();
                     }
-
                     var upload = new FirebaseStorage(
                         Bucket,
                         new FirebaseStorageOptions
@@ -259,31 +331,57 @@ namespace CarWash.Areas.Api.Account.Controllers
                         .Child(nameImage)
                         .Child($"{(name)}.jpg")
                         .PutAsync(fs, cancellation.Token);
-
                     var ImageUrl = await upload;
-                    if(image.StatusService == UpImage.Front)
+                    if(image.StatusService >= 1 && image.StatusService <= 8)
                     {
-                        job.ImageFront = ImageUrl;
-                        _context.Job.Update(job);
-                        _context.SaveChanges();
-                    }
-                    else if(image.StatusService == UpImage.Back)
-                    {
-                        job.ImageBack = ImageUrl;
-                        _context.Job.Update(job);
-                        _context.SaveChanges();
-                    }
-                    else if(image.StatusService == UpImage.Laft)
-                    {
-                        job.ImageLeft = ImageUrl;
-                        _context.Job.Update(job);
-                        _context.SaveChanges();
-                    }
-                    else if(image.StatusService == UpImage.Right)
-                    {
-                        job.ImageRight = ImageUrl;
-                        _context.Job.Update(job);
-                        _context.SaveChanges();
+                        if(image.StatusService == 1)
+                        {
+                            service.FrontBefore = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 2)
+                        {
+                            service.BackBefore = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 3)
+                        {
+                            service.FrontBefore = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 4)
+                        {
+                            service.FrontBefore = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 5)
+                        {
+                            service.FrontAfter = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 6)
+                        {
+                            service.BackAfter = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 7)
+                        {
+                            service.LaftAfter = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
+                        else if(image.StatusService == 8)
+                        {
+                            service.RightAfter = ImageUrl;
+                            _context.ImageSevice.Update(service);
+                            _context.SaveChanges();
+                        }
                     }
                     else if(image.StatusService == UpImage.OtherImage)
                     {
@@ -292,28 +390,29 @@ namespace CarWash.Areas.Api.Account.Controllers
                         _context.OthrerImage.Add(other);
                         _context.SaveChanges();
                     }
-
-                    var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-                    .Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).ToList();
-                    ImageService jobs = new ImageService();
-                    jobs.ImageFront = job.ImageFront;
-                    jobs.ImageBack = job.ImageBack;
-                    jobs.ImageLeft = job.ImageLeft;
-                    jobs.ImageRight = job.ImageRight;
+                    var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o => o.ImageSevice).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).ToList();
+                    ServiceImage serviceImage = new ServiceImage();
+                    serviceImage.FrontBefore = serviceDb.Select(o => o.FrontBefore).FirstOrDefault();
+                    serviceImage.BackBefore = serviceDb.Select(o => o.BackBefore).FirstOrDefault();
+                    serviceImage.LaftBefore = serviceDb.Select(o => o.LaftBefore).FirstOrDefault();
+                    serviceImage.RightBefore = serviceDb.Select(o => o.RightBefore).FirstOrDefault();
+                    serviceImage.FrontAfter = serviceDb.Select(o => o.FrontAfter).FirstOrDefault();
+                    serviceImage.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
+                    serviceImage.LaftAfter = serviceDb.Select(o => o.LaftAfter).FirstOrDefault();
+                    serviceImage.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();
                     List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
                     foreach(OthrerImage images in Jobimage)
                     {
                         OtherImage otherImage = new OtherImage();
                         otherImage.ImageId = images.ImageId;
                         otherImage.Image = images.Image;
-                        jobs.OtherImages.Add(otherImage);
+                        serviceImage.OtherImageSevice.Add(otherImage);
                     }
                     UpImageResponse response = new UpImageResponse();
                     response.Success = true;
                     response.Message = "อัพรูปสำเร็จ";
-                    response.ServiceImage = jobs;
+                    response.ServiceImage = serviceImage;
                     return Json(response);
-
                 }
             }
             catch(Exception ex)
@@ -358,17 +457,17 @@ namespace CarWash.Areas.Api.Account.Controllers
                 reponse.Navigation = navigation;
                 return Json(reponse);
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 return BadRequest();
             }
-            return Ok();
+
         }
 
         [HttpGet]
         public IActionResult History(long? DateBegin, long? DateEnd)
         {
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int idName = int.Parse(Id);
             HistoryResponse historyResponse = new HistoryResponse();
@@ -383,13 +482,44 @@ namespace CarWash.Areas.Api.Account.Controllers
                 foreach(Job HistoryJob in JobDbmonth)
                 {
                     JobHistory job = new JobHistory(HistoryJob);
+                    List<ImageSevice> imageSevices = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                    foreach(ImageSevice sevice in imageSevices)
+                    {
+                        ImageSevices image1 = new ImageSevices();
+                        image1.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                        job.ImageBeforeService.Add(image1);
+                        ImageSevices image2 = new ImageSevices();
+                        image2.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                        job.ImageBeforeService.Add(image2);
+                        ImageSevices image3 = new ImageSevices();
+                        image3.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                        job.ImageBeforeService.Add(image3);
+                        ImageSevices image4 = new ImageSevices();
+                        image4.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                        job.ImageBeforeService.Add(image4);
+                    }
+                    foreach(ImageSevice sevice in imageSevices)
+                    {
+                        AfterImage image1 = new AfterImage();
+                        image1.Image = imageSevices.Select(o => o.FrontAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(image1);
+                        AfterImage image2 = new AfterImage();
+                        image2.Image = imageSevices.Select(o => o.BackAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(image2);
+                        AfterImage image3 = new AfterImage();
+                        image3.Image = imageSevices.Select(o => o.LaftAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(image3);
+                        AfterImage image4 = new AfterImage();
+                        image4.Image = imageSevices.Select(o => o.RightAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(image4);
+                    }
                     List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
                     foreach(OthrerImage image in Jobimage)
                     {
                         OtherImage otherImage = new OtherImage();
                         otherImage.ImageId = image.ImageId;
                         otherImage.Image = image.Image;
-                        job.OtherImages.Add(otherImage);
+                        job.OtherImageService.Add(otherImage);
                     }
                     jobs1.Add(job);
                 }
@@ -407,12 +537,43 @@ namespace CarWash.Areas.Api.Account.Controllers
             {
                 JobHistory job = new JobHistory(HistoryJob);
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                List<ImageSevice> imageSevices = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                foreach(ImageSevice sevice in imageSevices)
+                {
+                    ImageSevices image1 = new ImageSevices();
+                    image1.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                    job.ImageBeforeService.Add(image1);
+                    ImageSevices image2 = new ImageSevices();
+                    image2.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                    job.ImageBeforeService.Add(image2);
+                    ImageSevices image3 = new ImageSevices();
+                    image3.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                    job.ImageBeforeService.Add(image3);
+                    ImageSevices image4 = new ImageSevices();
+                    image4.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                    job.ImageBeforeService.Add(image4);
+                }
+                foreach(ImageSevice sevice in imageSevices)
+                {
+                    AfterImage image1 = new AfterImage();
+                    image1.Image = imageSevices.Select(o => o.FrontAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(image1);
+                    AfterImage image2 = new AfterImage();
+                    image2.Image = imageSevices.Select(o => o.BackAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(image2);
+                    AfterImage image3 = new AfterImage();
+                    image3.Image = imageSevices.Select(o => o.LaftAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(image3);
+                    AfterImage image4 = new AfterImage();
+                    image4.Image = imageSevices.Select(o => o.RightAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(image4);
+                }
                 foreach(OthrerImage image in Jobimage)
                 {
                     OtherImage otherImage = new OtherImage();
                     otherImage.ImageId = image.ImageId;
                     otherImage.Image = image.Image;
-                    job.OtherImages.Add(otherImage);
+                    job.OtherImageService.Add(otherImage);
                 }
                 jobs.Add(job);
             }
@@ -423,7 +584,7 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpPost]
-        public IActionResult JobRequest()
+        public IActionResult JobQuestion()
         {
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -432,11 +593,12 @@ namespace CarWash.Areas.Api.Account.Controllers
             JobRequset jobreq = new JobRequset();
             jobreq.JobId = job.JobId;
             jobreq.FullName = "Srisuk NAN";
-            jobreq.ImageProfile = "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQmwhJ_cqL4z3zxh8mxxn_5Iy7wYIwaAoJ0Yg6VI77u36WLi2QA&usqp=CAU";
+            jobreq.ImageProfile = "https://s.isanook.com/no/0/ud/149/747091/747091-thumbnail-20191121161226.jpg";
             jobreq.Latitude = job.Latitude;
             jobreq.Longitude = job.Longitude;
             jobreq.PackageName = "ล้างสี+ดูดฝุ่น";
             jobreq.VehicleRegistration = "อด285";
+            jobreq.Distance = "8.5 km";
             jobreq.Price = "฿ 140.00";
             jobreq.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
             JobRequestResponse jobRequest = new JobRequestResponse();
@@ -447,36 +609,35 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpPost]
-        public IActionResult JobResponse([FromBody] ReqJobStatus status)
+
+        public IActionResult JobAnswer([FromBody] ReqJobStatus status)
         {
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int idName = int.Parse(Id);
             JobRequset jobname = new JobRequset();
-            String date = DateTime.Now.ToString("ddMMyyyyHHmm");
+            string date = DateTime.Now.ToString("ddMMyyyyHHmm");
             int month = Convert.ToInt32(date.Substring(2, 2));
             JobRequestResponse jobRequest = new JobRequestResponse();
-            var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName );
+            var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName);
             HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == idName).FirstOrDefault();
-
             var JobN = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
             Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
             int sum = 1;
             var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
             if(dateMonth != month)
             {
-                homeScore.Acceptance = null;
-                homeScore.Cancellation = null;
-                homeScore.MaxJob = null;
-                homeScore.Rating = null;
+                homeScore.Acceptance = 0;
+                homeScore.Cancellation = 0;
+                homeScore.MaxJob = 0;
+                homeScore.Rating = 0;
                 homeScore.CreatedTime = DateTime.Now;
                 _context.HomeScore.Update(homeScore);
                 _context.SaveChanges();
             }
             if(status.JobStatus == 0)
             {
-                
-                if(homeScoreSum.Select(o => o.Cancellation).FirstOrDefault() == null)
+                if(homeScoreSum.Select(o => o.Cancellation)?.FirstOrDefault() == null)
                 {
                     homeScore.Cancellation = 0;
                     _context.HomeScore.Update(homeScore);
@@ -497,7 +658,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             else if(status.JobStatus == 1)
             {
-                if(homeScoreSum.Select(o => o.Acceptance).FirstOrDefault() == null)
+                if(homeScoreSum.Select(o => o.Acceptance)?.FirstOrDefault() == null)
                 {
                     homeScore.Acceptance = 0;
                     _context.HomeScore.Update(homeScore);
@@ -510,9 +671,10 @@ namespace CarWash.Areas.Api.Account.Controllers
                 job.StatusName = JobStatus.Desc.ReceiveJob;
                 jobname.JobId = JobN.Select(o => o.JobId).FirstOrDefault();
                 jobname.FullName = JobN.Select(o => o.Customer.FullName).FirstOrDefault();
+                jobname.Phone = JobN.Select(o => o.Customer.Phone).FirstOrDefault();
                 jobname.ImageProfile = JobN.Select(o => o.Customer.Image).FirstOrDefault();
-                jobname.Latitude = job.Latitude;
-                jobname.Longitude = job.Longitude;
+                jobname.Latitude = JobN.Select(o => o.Latitude).FirstOrDefault();
+                jobname.Longitude = JobN.Select(o => o.Longitude).FirstOrDefault();
                 jobname.PackageName = JobN.Select(o => o.Package.PackageImage).FirstOrDefault();
                 jobname.VehicleRegistration = JobN.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
                 jobname.Price = JobN.Select(o => o.Price.ToString()).FirstOrDefault();
@@ -529,8 +691,8 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpPost]
         public IActionResult StatusService()
         {
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int idName = int.Parse(Id);
             BaseResponse response = new BaseResponse();
             Job JobStatusName = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
@@ -544,8 +706,8 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpPost]
         public IActionResult PaymentJob()
         {
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int idName = int.Parse(Id);
             BaseResponse response = new BaseResponse();
             Job JobStatusName = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
@@ -571,14 +733,13 @@ namespace CarWash.Areas.Api.Account.Controllers
                 response.Message = "ไม่ได้ใส่ข้อความ";
                 return Json(response);
             }
-
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int userId = int.Parse(Id);
+                CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
+                Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
                 job.Comment = req.Report;
                 user.State = State.On;
                 _context.User.Update(user);
@@ -588,15 +749,13 @@ namespace CarWash.Areas.Api.Account.Controllers
                 response.Message = "บันทึกข้อมูลสำเร็จ";
                 return Json(response);
             }
-            catch(Exception e)
+            catch(Exception)
             {
 
             }
             return Ok();
         }
 
-
     }
-
 }
 

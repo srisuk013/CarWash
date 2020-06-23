@@ -8,6 +8,8 @@ namespace CarWash.Areas.Api.Models
     public class JobRequset
     {
         public int JobId { get; set; }
+
+        public String Phone { get; set; }
         public string ImageProfile { get; set; }
         public string FullName { get; set; }
         public string PackageName { get; set; }
@@ -16,6 +18,7 @@ namespace CarWash.Areas.Api.Models
         public string VehicleRegistration { get; set; }
         public string Price { get; set; }
         public string DateTime { get; set; }
+        public string Distance { get; set; }
 
     }
 }

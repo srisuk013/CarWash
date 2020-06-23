@@ -7,6 +7,7 @@ namespace CarWash.Models.DBModels
     {
         public Job()
         {
+            ImageSevice = new HashSet<ImageSevice>();
             OthrerImage = new HashSet<OthrerImage>();
         }
 
@@ -21,10 +22,6 @@ namespace CarWash.Models.DBModels
         public string StatusName { get; set; }
         public string JobApprove { get; set; }
         public string CodeJob { get; set; }
-        public string ImageRight { get; set; }
-        public string ImageLeft { get; set; }
-        public string ImageFront { get; set; }
-        public string ImageBack { get; set; }
         public string Report { get; set; }
         public int Price { get; set; }
         public string Comment { get; set; }
@@ -33,6 +30,7 @@ namespace CarWash.Models.DBModels
         public virtual User Customer { get; set; }
         public virtual User Employee { get; set; }
         public virtual Package Package { get; set; }
+        public virtual ICollection<ImageSevice> ImageSevice { get; set; }
         public virtual ICollection<OthrerImage> OthrerImage { get; set; }
     }
 }

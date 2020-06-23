@@ -10,7 +10,7 @@ namespace CarWash.Areas.Api.Models.ModelsReponse
     {
         public bool Success { get; set; }
         public string Message { get; set; }
-        public ImageService ServiceImage { get; set; }
+        public ServiceImage ServiceImage { get; set; }
 
     }
 }

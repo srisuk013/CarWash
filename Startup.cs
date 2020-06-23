@@ -24,6 +24,7 @@ using System.Text;
 using Renci.SshNet.Messages;
 using CarWash.Areas.Api.Models;
 using CarWash.Service;
+using CarWash.Areas.Api.Models.Models;
 
 namespace CarWash
 {
@@ -40,6 +41,7 @@ namespace CarWash
         public void ConfigureServices(IServiceCollection services)
         {
 
+      
             AppSettings.Secret = Configuration.GetSection("JWTKey").Value;
             services.AddDbContextPool<CarWashContext>(options =>
 options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User ID=srisuk013; Password=Srisuk1234"));
@@ -118,8 +120,9 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             services.AddScoped<ServiceCheck>();
             
             services.AddScoped<CarWashAuthorization>();
-           
 
+
+          
         }
 
 
@@ -143,7 +146,10 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             app.UseAuthentication();
             app.UseAuthorization();
 
-
+            app.UseStaticFiles();
+            app.UseWebSockets();
+  
+            
             app.UseEndpoints(endpoints =>
             {
                 Api_RouteConfig.Config(endpoints);
@@ -153,7 +159,7 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                 endpoints.MapRazorPages();
 
             });
-
+            
 
         }
 

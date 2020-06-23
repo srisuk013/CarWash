@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace CarWash.Areas.Api.Models.Models
+namespace CarWash.Models.DBModels
 {
-    public class ServiceImage
+    public partial class ImageSevice
     {
+        public int ImageId { get; set; }
+        public int? JobId { get; set; }
         public string FrontBefore { get; set; }
         public string BackBefore { get; set; }
         public string LaftBefore { get; set; }
@@ -15,16 +15,7 @@ namespace CarWash.Areas.Api.Models.Models
         public string BackAfter { get; set; }
         public string LaftAfter { get; set; }
         public string RightAfter { get; set; }
-        public List<OtherImage> OtherImageSevice { get; set; }
 
-        public ServiceImage()
-        {
-            
-            this.OtherImageSevice = new List<OtherImage>();
-           
-        }
-      
-
-
+        public virtual Job Job { get; set; }
     }
 }
