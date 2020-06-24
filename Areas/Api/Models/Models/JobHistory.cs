@@ -21,8 +21,8 @@ namespace CarWash.Areas.Api.Models
         public string Price;
         public string JobDateTime;
         public string Comment;
-        public List<OtherImage> OtherImageService;
-        public List<ImageSevices> ImageBeforeService;
+        public List<OtherImage> OtherImagesService;
+        public List<ImageSevices> ImagesBeforeService;
         public List<AfterImage> ImagesAfterService;
 
 
@@ -49,10 +49,10 @@ namespace CarWash.Areas.Api.Models
             this.VehicleRegistration = job.Car.VehicleRegistration;
             this.Price = "฿ "+ job.Price+".00";
             this.JobDateTime = dateStr;
-            this.ImageBeforeService = new List<ImageSevices>();
+            this.ImagesBeforeService = new List<ImageSevices>();
             this.Comment = job.Comment;
             this.ImagesAfterService = new List<AfterImage>();
-            this.OtherImageService = new List<OtherImage>();
+            this.OtherImagesService = new List<OtherImage>();
 
            
         }

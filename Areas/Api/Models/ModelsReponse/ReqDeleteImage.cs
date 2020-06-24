@@ -8,7 +8,7 @@ namespace CarWash.Areas.Api.Models.ModelsReponse
     public class ReqDeleteImage
     {
 
-        public int ImageId { get; set; }
+        public int? ImageId { get; set; }
 
         
 

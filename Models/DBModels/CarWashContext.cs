@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-     
+    
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -33,7 +33,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
- 
+       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

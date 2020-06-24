@@ -13,6 +13,7 @@ namespace CarWash.Models.DBModels
         public int? EmployeeId { get; set; }
         public DateTime CreatedTime { get; set; }
         public int? Score { get; set; }
+        public int? Timeout { get; set; }
 
         public virtual User Employee { get; set; }
     }

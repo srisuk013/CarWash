@@ -17,13 +17,14 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace CarWash.Areas.Account
 {
-
+    [Obsolete]
     [Area("Api")]
 
     public class AccountController : CarWashController
@@ -31,14 +32,13 @@ namespace CarWash.Areas.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly CarWashContext _context;
-        [Obsolete]
         private readonly IHostingEnvironment _env;
         private static string ApiKey = "AIzaSyA0xBPLP9vDxXdbsQ1PYkBROfs4-vYvB1M";
         private static string Bucket = "carwash-1e810.appspot.com";
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
-        [Obsolete]
+
         public AccountController(CarWashContext context, UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager, ServiceToken service, ServiceCheck check, IHostingEnvironment env)
         {
@@ -433,7 +433,7 @@ namespace CarWash.Areas.Account
             return Ok();
         }
 
-        [HttpPost]
+
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult UserLogs([FromBody] ReqUserLogs req)
         {
@@ -487,49 +487,47 @@ namespace CarWash.Areas.Account
         public async Task<string> UpProfileAsync(IFormFile file, string code)
         {
             string ImageUrl = null;
-            FileStream fs = null;
+
             if(file.Length > 0)
             {
-                string folderName = "FirebaseFilesV1";
-                string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
+                byte[] fileBytes;
+                using(var ms = file.OpenReadStream())
+                {
+                    using(var memoryStream = new MemoryStream())
+                    {
+                        ms.CopyTo(memoryStream);
+                        fileBytes = memoryStream.ToArray();
+                        Image img = Image.FromStream(ms);
+                        Size size = new Size(200, 200);
+                        var newImage = ServiceCheck.resizeImage(img, size);
+                        var stream = new System.IO.MemoryStream();
+                        newImage.Save(stream, ImageFormat.Jpeg);
+                        stream.Position = 0;
+                        var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
+                        var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                        var cancellation = new CancellationTokenSource();
+                        string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                        String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
 
-                if(Directory.Exists(path))
-                {
-                    using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
-                    {
-                        await file.CopyToAsync(fs);
+                        var upload = new FirebaseStorage(
+                            Bucket,
+                            new FirebaseStorageOptions
+                            {
+                                AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                                ThrowOnCancel = true
+                            })
+                            .Child("Imageprofile")
+                            .Child($"{(Code)}.jpg")
+                            .PutAsync(stream, cancellation.Token);
+                        ImageUrl = await upload;
                     }
-                    fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
+
                 }
-                else
-                {
-                    Directory.CreateDirectory(path);
-                }
-                var img = Image.FromStream(fs);
-                Size size = new Size(200, 200);
-                var newImage = ServiceCheck.resizeImage(img, size);
-                var stream = new System.IO.MemoryStream();
-                newImage.Save(stream, ImageFormat.Jpeg);
-                stream.Position = 0;
-                var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
-                var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
-                var cancellation = new CancellationTokenSource();
-                var upload = new FirebaseStorage(
-                    Bucket,
-                    new FirebaseStorageOptions
-                    {
-                        AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                        ThrowOnCancel = true
-                    })
-                    .Child("Imageprofile")
-                    .Child($"{(code)}.jpg")
-                    .PutAsync(stream, cancellation.Token);
-                ImageUrl = await upload;
             }
             return ImageUrl;
         }
 
-      
+
         [HttpPost]
         public IActionResult CheckPhone([FromBody] ReqCheckPhone req)
         {
@@ -622,6 +620,7 @@ namespace CarWash.Areas.Account
                 var dateYear = homeScoreSum.Select(o => o.CreatedTime.Year).FirstOrDefault();
                 if(dateMonth != month)
                 {
+                    homeScore.Timeout = 0;
                     homeScore.Acceptance = 0;
                     homeScore.Cancellation = 0;
                     homeScore.MaxJob = 0;
@@ -648,7 +647,7 @@ namespace CarWash.Areas.Account
                     HomeScoreModel model = new HomeScoreModel();
                     double? ratings = ((ScoreSum / jobSum));
                     string ratingsSub1 = String.Format("{0:0}", ratings);
-                    model.Ratings = ratingsSub1+".00";
+                    model.Ratings = ratingsSub1 + ".00";
                     double? Acceptances = ((AcceptanceSum / MaxJobSum) * 100);
                     string str = String.Format("{0:0.00}%", Acceptances);
                     model.Acceptance = str;
@@ -738,63 +737,59 @@ namespace CarWash.Areas.Account
 
         }
 
+
+
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public async Task<IActionResult> ChangeProfile([FromForm] IFormFile file)
         {
-            FileStream fs = null;
+
             try
             {
                 if(file.Length > 0)
                 {
-                    string folderName = "FirebaseFilesV1";
-                    string path = Path.Combine(_env.WebRootPath, $"images/{folderName}");
-
-                    if(Directory.Exists(path))
+                    byte[] fileBytes;
+                    using(var ms = file.OpenReadStream())
                     {
-                        using(fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
+                        using(var memoryStream = new MemoryStream())
                         {
-                            await file.CopyToAsync(fs);
+                            ms.CopyTo(memoryStream);
+                            fileBytes = memoryStream.ToArray();
+                            Image img = Image.FromStream(ms);
+                            Size size = new Size(200, 200);
+                            var newImage = ServiceCheck.resizeImage(img, size);
+                            var stream = new System.IO.MemoryStream();
+                            newImage.Save(stream, ImageFormat.Jpeg);
+                            stream.Position = 0;
+                            var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
+                            var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                            var cancellation = new CancellationTokenSource();
+                            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                            String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
+
+                            var upload = new FirebaseStorage(
+                                Bucket,
+                                new FirebaseStorageOptions
+                                {
+                                    AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                                    ThrowOnCancel = true
+                                })
+                                .Child("Imageprofile")
+                                .Child($"{(Code)}.jpg")
+                                .PutAsync(stream, cancellation.Token);
+                            var ImageUrl = await upload;
+                            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                            int idName = int.Parse(Id);
+                            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                            user.Image = ImageUrl;
+                            _context.User.Update(user);
+                            _context.SaveChanges();
+                            BaseResponse response = new BaseResponse();
+                            response.Success = true;
+                            response.Message = "เปลี่ยนรูปสำเร็จ";
+                            return Json(response);
                         }
-                        fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
                     }
-                    else
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-                    Image img = Image.FromStream(fs);
-                    Size size = new Size(200, 200);
-                    var newImage = ServiceCheck.ResizeImage(img, 200, 200);
-                    var stream = new System.IO.MemoryStream();
-                    newImage.Save(stream, ImageFormat.Jpeg);
-                    stream.Position = 0;
-                    var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
-                    var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
-                    var cancellation = new CancellationTokenSource();
-                    string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                    string Code = User.FindFirst(ClaimTypes.PostalCode).Value;
-                    var upload = new FirebaseStorage(
-                        Bucket,
-                        new FirebaseStorageOptions
-                        {
-                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                            ThrowOnCancel = true
-                        })
-                        .Child("Imageprofile")
-                        .Child($"{(Code)}.jpg")
-                        .PutAsync(stream, cancellation.Token);
-
-                    var ImageUrl = await upload;
-                    String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                    int idName = int.Parse(Id);
-                    CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                    user.Image = ImageUrl;
-                    _context.User.Update(user);
-                    _context.SaveChanges();
-                    BaseResponse response = new BaseResponse();
-                    response.Success = true;
-                    response.Message = "เปลี่ยนรูปสำเร็จ";
-                    return Json(response);
 
                 }
             }
