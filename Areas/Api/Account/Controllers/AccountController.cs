@@ -498,35 +498,29 @@ namespace CarWash.Areas.Account
                         ms.CopyTo(memoryStream);
                         fileBytes = memoryStream.ToArray();
                         Image img = Image.FromStream(ms);
-                        Size size = new Size(200, 200);
-                        var newImage = ServiceCheck.resizeImage(img, size);
+                        var newImage = ServiceCheck.ResizeImage(img, 200, 200);
                         var stream = new System.IO.MemoryStream();
                         newImage.Save(stream, ImageFormat.Jpeg);
                         stream.Position = 0;
                         var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
-                        var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                        var authEmailAndPassword = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
                         var cancellation = new CancellationTokenSource();
-                        string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                        String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
-
                         var upload = new FirebaseStorage(
                             Bucket,
                             new FirebaseStorageOptions
                             {
-                                AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                                AuthTokenAsyncFactory = () => Task.FromResult(authEmailAndPassword.FirebaseToken),
                                 ThrowOnCancel = true
                             })
                             .Child("Imageprofile")
-                            .Child($"{(Code)}.jpg")
+                            .Child($"{(code)}.jpg")
                             .PutAsync(stream, cancellation.Token);
                         ImageUrl = await upload;
                     }
-
                 }
             }
             return ImageUrl;
         }
-
 
         [HttpPost]
         public IActionResult CheckPhone([FromBody] ReqCheckPhone req)
@@ -570,6 +564,7 @@ namespace CarWash.Areas.Account
         public async Task<IActionResult> changePassword([FromBody] ReqNewPassword req)
         {
             BaseResponse response = new BaseResponse();
+            response.Success = false;
             if(ServiceCheck.CheckPassWord(req.OldPassword) == false)
             {
                 response.Message = "กรุณาใส่รหัสผ่านเดิมให้ถูกต้อง";
@@ -613,12 +608,33 @@ namespace CarWash.Areas.Account
                 int year = Convert.ToInt32(date.Substring(4, 4));
                 Job jobdb = _context.Job.Where(o => o.EmployeeId == userId).FirstOrDefault();
                 var job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId && o.JobDateTime.Month == month).FirstOrDefault();
-                var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId);
                 HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == userId).FirstOrDefault();
+                var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId);
                 var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
                 var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
                 var dateYear = homeScoreSum.Select(o => o.CreatedTime.Year).FirstOrDefault();
-                if(dateMonth != month)
+                HomeScoreModel model = new HomeScoreModel();
+                HomeScoreResponse home = new HomeScoreResponse();
+                if(dateMonth == 0)
+                {
+                    HomeScore newhomescore = new HomeScore();
+                    newhomescore.Acceptance = 0;
+                    newhomescore.Cancellation = 0;
+                    newhomescore.MaxJob = 0;
+                    newhomescore.Rating = 5.00;
+                    newhomescore.Timeout = 0;
+                    newhomescore.CreatedTime = DateTime.Now;
+                    _context.HomeScore.Update(newhomescore);
+                    _context.SaveChanges();
+                    home.Success = true;
+                    home.Message = "สำเร็จ";
+                    model.Ratings = "5.0";
+                    model.Acceptance = "0 %";
+                    model.Cancellation = "0 %";
+                    home.HomeScore = model;
+                    return Json(home);
+                }
+                else if(dateMonth != month)
                 {
                     homeScore.Timeout = 0;
                     homeScore.Acceptance = 0;
@@ -628,13 +644,20 @@ namespace CarWash.Areas.Account
                     homeScore.CreatedTime = DateTime.Now;
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
+                    model.Acceptance = "0 %";
+                    model.Cancellation = "0 %";
+                    model.Ratings = "5.0";
+                    home.Success = true;
+                    home.Message = "สำเร็จ";
+                    home.HomeScore = model;
+                    return Json(home);
                 }
                 else if(dateMonth == month && dateYear == year)
                 {
                     var jobSum = job.JobId.ToString().Count();
                     var CancellationSum = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault();
                     var AcceptanceSum = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault();
-                    var MaxJobSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
+                    var jobMaxSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
                     var ScoreSum = homeScoreSum.Select(o => o.Score).FirstOrDefault();
                     var rating = homeScoreSum.Select(o => o.Rating)?.FirstOrDefault();
                     if(rating == null)
@@ -643,18 +666,15 @@ namespace CarWash.Areas.Account
                         _context.HomeScore.Update(homeScore);
                         _context.SaveChanges();
                     }
-
-                    HomeScoreModel model = new HomeScoreModel();
                     double? ratings = ((ScoreSum / jobSum));
-                    string ratingsSub1 = String.Format("{0:0}", ratings);
-                    model.Ratings = ratingsSub1 + ".00";
-                    double? Acceptances = ((AcceptanceSum / MaxJobSum) * 100);
-                    string str = String.Format("{0:0.00}%", Acceptances);
-                    model.Acceptance = str;
-                    var Cancellations = ((CancellationSum / MaxJobSum) * 100);
-                    string str1 = String.Format("{0:0.00}%", Cancellations);
-                    model.Cancellation = str1;
-                    HomeScoreResponse home = new HomeScoreResponse();
+                    string showratings = String.Format("{0:0}", ratings);
+                    model.Ratings = showratings + ".00";
+                    double? Acceptances = ((AcceptanceSum / jobMaxSum) * 100);
+                    string showAccptances = String.Format("{0:0.00}%", Acceptances);
+                    model.Acceptance = showAccptances;
+                    var Cancellations = ((CancellationSum / jobMaxSum) * 100);
+                    string showCancellations = String.Format("{0:0.00}%", Cancellations);
+                    model.Cancellation = showCancellations;
                     home.Success = true;
                     home.Message = "สำเร็จ";
                     home.HomeScore = model;
@@ -673,13 +693,13 @@ namespace CarWash.Areas.Account
         public IActionResult Location([FromBody] ReqLocation location)
         {
             BaseResponse response = new BaseResponse();
-            if(location.latitude == 0)
+            if(location.latitude == null)
             {
                 response.Success = false;
                 response.Message = "ไม่ได้ใส่่ตำแหน่ง";
                 return Json(response);
             }
-            else if(location.longitude == 0)
+            else if(location.longitude == null)
             {
                 response.Success = false;
                 response.Message = "ไม่ได้ใส่่ตำแหน่ง";
@@ -711,9 +731,14 @@ namespace CarWash.Areas.Account
         public IActionResult SwitchSystem([FromBody] ReqSwitchSystem req)
         {
             BaseResponse response = new BaseResponse();
+            response.Success = false;
+            if(req.State == null)
+            {
+                response.Message = "ไม่ได้ส่งค่าState";
+                return Json(response);
+            }
             if(req.State != 1 && req.State != 0)
             {
-                response.Success = false;
                 response.Message = "State มีค่า=0,1เท่านั้น";
                 return Json(response);
             }
@@ -737,13 +762,10 @@ namespace CarWash.Areas.Account
 
         }
 
-
-
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public async Task<IActionResult> ChangeProfile([FromForm] IFormFile file)
         {
-
             try
             {
                 if(file.Length > 0)
@@ -756,22 +778,20 @@ namespace CarWash.Areas.Account
                             ms.CopyTo(memoryStream);
                             fileBytes = memoryStream.ToArray();
                             Image img = Image.FromStream(ms);
-                            Size size = new Size(200, 200);
-                            var newImage = ServiceCheck.resizeImage(img, size);
+                            var newImage = ServiceCheck.ResizeImage(img, 200, 200);
                             var stream = new System.IO.MemoryStream();
                             newImage.Save(stream, ImageFormat.Jpeg);
                             stream.Position = 0;
                             var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
-                            var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
+                            var authEmailAndPassword = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
                             var cancellation = new CancellationTokenSource();
                             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                             String Code = User.FindFirst(ClaimTypes.PostalCode).Value;
-
                             var upload = new FirebaseStorage(
                                 Bucket,
                                 new FirebaseStorageOptions
                                 {
-                                    AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                                    AuthTokenAsyncFactory = () => Task.FromResult(authEmailAndPassword.FirebaseToken),
                                     ThrowOnCancel = true
                                 })
                                 .Child("Imageprofile")

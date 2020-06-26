@@ -15,16 +15,15 @@ using Microsoft.Extensions.Hosting;
 using CarWash.Data;
 using CarWash.Models.DBModels;
 using CarWash.Areas.Api;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Serialization;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Renci.SshNet.Messages;
 using CarWash.Areas.Api.Models;
 using CarWash.Service;
-using CarWash.Areas.Api.Models.Models;
+
+
+
 
 namespace CarWash
 {
@@ -75,6 +74,8 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             
             services.AddControllersWithViews();
             services.AddRazorPages();
+    
+
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings.
@@ -118,8 +119,8 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             // transient
             services.AddScoped<ServiceToken>();
             services.AddScoped<ServiceCheck>();
-            
             services.AddScoped<CarWashAuthorization>();
+            services.AddSignalR();
 
 
           
@@ -127,6 +128,7 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        [Obsolete]
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -159,10 +161,12 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                 endpoints.MapRazorPages();
 
             });
-            
+            app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+            app.UseSignalR((options) => {
+
+            });
 
         }
-
     }
 }
 

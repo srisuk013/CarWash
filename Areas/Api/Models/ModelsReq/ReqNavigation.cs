@@ -7,7 +7,7 @@ namespace CarWash.Areas.Api.Models.ModelsReq
 {
     public class ReqNavigation
     {
-        public Double Latitude { get; set; }
-        public Double Longitude { get; set; }
+        public Double? Latitude { get; set; }
+        public Double? Longitude { get; set; }
     }
 }

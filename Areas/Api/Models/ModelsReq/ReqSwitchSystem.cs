@@ -7,7 +7,7 @@ namespace CarWash.Areas.Api.Models
 {
     public class ReqSwitchSystem
     {
-        public int State { get; set; }
+        public int? State { get; set; }
 
     }
 }
