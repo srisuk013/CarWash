@@ -21,9 +21,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CarWash.Areas.Api.Models;
 using CarWash.Service;
-
-
-
+using CarWash.Hubs;
 
 namespace CarWash
 {
@@ -123,7 +121,7 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             services.AddSignalR();
 
 
-          
+
         }
 
 
@@ -159,12 +157,11 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
+                endpoints.MapHub<Chat>($"/{nameof(Chat)}");
 
             });
             app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
-            app.UseSignalR((options) => {
-
-            });
+          
 
         }
     }
