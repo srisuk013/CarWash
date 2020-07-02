@@ -23,6 +23,7 @@ using CarWash.Areas.Api.Models;
 using CarWash.Service;
 using CarWash.Hubs;
 
+
 namespace CarWash
 {
     public class Startup
@@ -157,11 +158,19 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
-                endpoints.MapHub<Chat>($"/{nameof(Chat)}");
+               
+
 
             });
             app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+
           
+
+            app.UseSignalR(routes => {
+                routes.MapHub<MoveViewHub>("/movehub");
+                routes.MapHub<ChatHub>("/chathub");
+            });
+
 
         }
     }

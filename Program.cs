@@ -22,6 +22,7 @@ namespace CarWash
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                   
                 });
     }
 }

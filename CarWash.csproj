@@ -81,10 +81,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\lib\signalr\signalr.js" />
-    <None Include="wwwroot\lib\signalr\signalr.js.map" />
-    <None Include="wwwroot\lib\signalr\signalr.min.js" />
-    <None Include="wwwroot\lib\signalr\signalr.min.js.map" />
+    <None Include="Shared\_Layout.cshtml" />
+    <None Include="Shared\_ValidationScriptsPartial.cshtml" />
   </ItemGroup>
 
 </Project>
