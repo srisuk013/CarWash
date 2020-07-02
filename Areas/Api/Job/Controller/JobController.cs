@@ -41,7 +41,6 @@ namespace CarWash.Areas.Api.Account.Controllers
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
-
         public JobController(CarWashContext context, UserManager<IdentityUser> userManager,
            SignInManager<IdentityUser> signInManager, IHostingEnvironment env)
         {

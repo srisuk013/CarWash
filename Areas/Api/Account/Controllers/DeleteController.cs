@@ -11,14 +11,14 @@ namespace CarWash.Areas.Api.Account.Controllers
 {
     [Area("Api")]
 
-    public class DeleteController : Controller
+    public class TheEggGameController : Controller
     {
 
         private CarWashContext _context;
         private UserManager<IdentityUser> _userManager;
         private SignInManager<IdentityUser> _signInManager;
 
-        public DeleteController(CarWashContext context, UserManager<IdentityUser> userManager,
+        public TheEggGameController(CarWashContext context, UserManager<IdentityUser> userManager,
            SignInManager<IdentityUser> signInManager)
         {
             _context = context;
