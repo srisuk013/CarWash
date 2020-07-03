@@ -2,6 +2,7 @@
 using CarWash.Areas.Api.Models;
 using CarWash.Areas.Api.Models.Models;
 using CarWash.Areas.Api.Models.ModelsConst;
+using CarWash.Areas.Api.Models.ModelsReponse;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using Firebase.Auth;
@@ -607,7 +608,7 @@ namespace CarWash.Areas.Account
                 int month = Convert.ToInt32(date.Substring(2, 2));
                 int year = Convert.ToInt32(date.Substring(4, 4));
                 Job jobdb = _context.Job.Where(o => o.EmployeeId == userId).FirstOrDefault();
-                var job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId && o.JobDateTime.Month == month).FirstOrDefault();
+                var job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId && o.JobDateTime.Year == year).FirstOrDefault();
                 HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == userId).FirstOrDefault();
                 var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId);
                 var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
@@ -634,12 +635,13 @@ namespace CarWash.Areas.Account
                     home.HomeScore = model;
                     return Json(home);
                 }
-                else if(dateMonth != month)
+                else if(dateYear != year)
                 {
                     homeScore.Timeout = 0;
                     homeScore.Acceptance = 0;
                     homeScore.Cancellation = 0;
                     homeScore.MaxJob = 0;
+                    homeScore.Score = 0;
                     homeScore.Rating = 5.00;
                     homeScore.CreatedTime = DateTime.Now;
                     _context.HomeScore.Update(homeScore);
