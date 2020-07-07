@@ -3,6 +3,7 @@ using CarWash.Areas.Api.Models.Models;
 using CarWash.Areas.Api.Models.ModelsConst;
 using CarWash.Areas.Api.Models.ModelsReponse;
 using CarWash.Areas.Api.Models.ModelsReq;
+using CarWash.Hubs;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using Firebase.Auth;
@@ -11,6 +12,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -36,18 +39,20 @@ namespace CarWash.Areas.Api.Account.Controllers
         private SignInManager<IdentityUser> _signInManager;
 
         private readonly IHostingEnvironment _env;
+        private readonly IHubContext<ChatHub> HubContext;
         private static string ApiKey = "AIzaSyA0xBPLP9vDxXdbsQ1PYkBROfs4-vYvB1M";
         private static string Bucket = "carwash-1e810.appspot.com";
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
         public JobController(CarWashContext context, UserManager<IdentityUser> userManager,
-           SignInManager<IdentityUser> signInManager, IHostingEnvironment env)
+           SignInManager<IdentityUser> signInManager, IHostingEnvironment env, IHubContext<ChatHub> hubcontext)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
             _env = env;
+            HubContext = hubcontext;
         }
         [HttpPost]
         public IActionResult DeleteServiceImage([FromBody] ReqDeleteImage req)
@@ -775,6 +780,49 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return Ok();
         }
+       
+        
+        
+        
+        [HttpPost]
+        public async Task<IActionResult> CusJobAsync([FromBody] ChatMessage chat )
+        {
+            BaseResponse response = new BaseResponse();
+            try
+            {
+                
+                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int userId = int.Parse(Id);
+                Chat chatHub = new Chat();
+                chatHub.Message = chat.Message;
+                chatHub.Name = chat.Name;
+                _context.Chat.Update(chatHub);
+                _context.SaveChanges();
+                ChatMessage json = new ChatMessage();
+                Chat chatDb = _context.Chat.OrderByDescending(o => o.ChatId).FirstOrDefault();
+                json.ChatId = chatDb.ChatId;
+                json.Name = chatDb.Name;
+                json.Message = chatDb.Message;
+                 string result = JsonConvert.SerializeObject(json);
+                await HubContext.Clients.All.SendAsync("ReceiveChat", result);
+                
+                response.Success =true;
+                response.Message = "สำเร็จ";
+                return Json(response);
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Message = "ไม่สำเร็จ";
+                return Json(response);
+
+            }
+        
+        }
+
+       
+
 
     }
 }

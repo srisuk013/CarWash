@@ -77,7 +77,7 @@
 
   <ItemGroup>
     <Folder Include="Areas\Api\Account\Models\" />
-    <Folder Include="Areas\Api\Job\Controller\" />
+    <Folder Include="Areas\Api\CusAccount\shop\" />
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
