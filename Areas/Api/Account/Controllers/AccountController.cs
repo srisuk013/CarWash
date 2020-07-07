@@ -3,6 +3,7 @@ using CarWash.Areas.Api.Models;
 using CarWash.Areas.Api.Models.Models;
 using CarWash.Areas.Api.Models.ModelsConst;
 using CarWash.Areas.Api.Models.ModelsReponse;
+using CarWash.Hubs;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using Firebase.Auth;
@@ -434,19 +435,11 @@ namespace CarWash.Areas.Account
             return Ok();
         }
 
-
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult UserLogs([FromBody] ReqUserLogs req)
         {
             BaseResponse response = new BaseResponse();
-
-            if(String.IsNullOrEmpty(req.LogsKeys))
-            {
-                response.Success = true;
-                response.Message = "ไม่ได้ใส่LogsKeys";
-                return Json(response);
-            }
-            else if(req.LogsStatus != 1 && req.LogsStatus != 0)
+            if(req.LogsStatus != 1 && req.LogsStatus != 0)
             {
                 response.Success = true;
                 response.Message = "LogsStatus มีค่า=0,1เท่านั้น";
@@ -461,18 +454,16 @@ namespace CarWash.Areas.Account
                 if(req.LogsStatus == 1)
                 {
                     user.UserId = idName;
-                    user.LogsKey = req.LogsKeys;
                     user.DatetimeActiveIn = DateTime.Now;
                     _context.UserLogs.Add(user);
                 }
                 else if(req.LogsStatus == 0)
                 {
-                    UserLogs logs = _context.UserLogs.Where(o => o.LogsKey == req.LogsKeys).FirstOrDefault();
+                    UserLogs logs = _context.UserLogs.OrderByDescending(o => o.UserLogsId).FirstOrDefault();
                     logs.DatetimeActiveOut = DateTime.Now;
                     _context.UserLogs.Update(logs);
                 }
                 _context.SaveChanges();
-
                 response.Success = true;
                 response.Message = "สำเร็จ";
                 return Json(response);

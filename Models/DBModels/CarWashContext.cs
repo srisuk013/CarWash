@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-    
+     
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -23,6 +23,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<CarBrand> CarBrand { get; set; }
         public virtual DbSet<CarModel> CarModel { get; set; }
         public virtual DbSet<CarSize> CarSize { get; set; }
+        public virtual DbSet<Chat> Chat { get; set; }
         public virtual DbSet<HomeScore> HomeScore { get; set; }
         public virtual DbSet<ImageSevice> ImageSevice { get; set; }
         public virtual DbSet<Job> Job { get; set; }
@@ -33,7 +34,6 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -173,6 +173,13 @@ namespace CarWash.Models.DBModels
                 entity.Property(e => e.SizeName)
                     .IsRequired()
                     .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<Chat>(entity =>
+            {
+                entity.Property(e => e.Message).HasMaxLength(200);
+
+                entity.Property(e => e.Name).HasMaxLength(100);
             });
 
             modelBuilder.Entity<HomeScore>(entity =>
@@ -318,10 +325,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<UserLogs>(entity =>
             {
-                entity.Property(e => e.LogsKey)
-                    .IsRequired()
-                    .HasMaxLength(100);
-
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.UserLogs)
                     .HasForeignKey(d => d.UserId)
