@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,6 +20,6 @@ namespace CarWash.Areas.Api.Models
         public string Price { get; set; }
         public string DateTime { get; set; }
         public string Distance { get; set; }
-
+        public string Location { get; set; }
     }
 }

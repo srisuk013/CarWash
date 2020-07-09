@@ -23,6 +23,14 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using GeoCoordinatePortable;
+using System.Net;
+using Microsoft.AspNetCore.Http;
+using System.Net.Http;
+using MySqlX.XDevAPI.Relational;
+using System.Text;
+using System.Net.Http.Headers;
+using Stripe;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -45,6 +53,11 @@ namespace CarWash.Areas.Api.Account.Controllers
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
+
+
+        // Create IPGeolocationAPI object, passing your valid API key
+
+
         public JobController(CarWashContext context, UserManager<IdentityUser> userManager,
            SignInManager<IdentityUser> signInManager, IHostingEnvironment env, IHubContext<ChatHub> hubcontext)
         {
@@ -53,6 +66,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             _signInManager = signInManager;
             _env = env;
             HubContext = hubcontext;
+
         }
         [HttpPost]
         public IActionResult DeleteServiceImage([FromBody] ReqDeleteImage req)
@@ -523,6 +537,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                         otherImage.Image = image.Image;
                         job.OtherImagesService.Add(otherImage);
                     }
+                
                     jobDb.Add(job);
                 }
                 historyResponse.Success = true;
@@ -586,7 +601,7 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpPost]
-        public IActionResult JobQuestion()
+        public async Task<IActionResult> JobQuestionAsync()
         {
             string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -596,23 +611,58 @@ namespace CarWash.Areas.Api.Account.Controllers
             jobreq.JobId = job.JobId;
             jobreq.FullName = "กัญญา เนื่องบุรี";
             jobreq.ImageProfile = "https://scontent.fbkk5-4.fna.fbcdn.net/v/t1.0-9/p720x720/53656017_2208855455803733_6158198433413857280_o.jpg?_nc_cat=110&_nc_sid=110474&_nc_eui2=AeEZxZny9F1z_Es8eNXVpkL34Kgb6H0dL93gqBvofR0v3R-7JPOUsSuXE3rgjgsq98W7QpuSyxfOff3RNVrYCe8r&_nc_oc=AQkBIfTYrQlRZFmWKHQDAqTC4Ot9b2WnQOoVnDCrW3gNYFW3_PH8k06Ai_5c-up68RjbM6Wy63U9X7XwVxdvT1YZ&_nc_ht=scontent.fbkk5-4.fna&_nc_tp=6&oh=1f3c303c5fd39d4257d2dc6789123410&oe=5F0DAD45";
-            jobreq.Latitude = job.Latitude;
+
+            var Latitude = job.Latitude;
+            var Longitude = job.Longitude;
+            JobRequestResponse jobRequest = new JobRequestResponse();
             jobreq.Longitude = job.Longitude;
             jobreq.PackageName = "ล้างสี";
             jobreq.VehicleRegistration = "อด285";
-            jobreq.Distance = "8.5 km";
+            
+            string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
+            string empLongitude = "flon=" + job.Employee.Longitude.ToString(); ;
+            string empLatitude = "&flat=" + job.Employee.Latitude.ToString();
+            string cusLongitude = "&tlon=" + Longitude.ToString();
+            string cusLatitude = "&tlat=" + Latitude.ToString();
+            string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude + cusLatitude + cusLongitude + key;
+                        LocationReponse EmpInfo = new LocationReponse();
+            using(var client = new HttpClient())
+            {
+                //Passing service base url  
+                client.BaseAddress = new Uri(Baseurl);
+
+                client.DefaultRequestHeaders.Clear();
+                //Define request data format  
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));  
+                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                //Checking the response is successful or not which is sent using HttpClient  
+                if(Res.IsSuccessStatusCode)
+                {
+                    //Storing the response details recieved from web api   
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+
+                    //Deserializing the response recieved from web api and storing into the Employee list  
+                     EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
+                    
+                }
+            }
+            var Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
+            Double DistanceSum = (Distance / 1000);
+            string showDistance = String.Format("{0:0.0} km", DistanceSum);
+            jobreq.Distance = showDistance;
             jobreq.Price = "฿ 120.00";
             jobreq.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
-            JobRequestResponse jobRequest = new JobRequestResponse();
             jobRequest.Success = true;
             jobRequest.Message = "สำเร็จ";
+            jobRequest.location = EmpInfo;
             jobRequest.Job = jobreq;
             return Json(jobRequest);
         }
 
         [HttpPost]
 
-        public IActionResult JobAnswer([FromBody] ReqJobStatus status)
+        public async Task<IActionResult> JobAnswerAsync([FromBody] ReqJobStatus status)
         {
             JobRequestResponse jobRequest = new JobRequestResponse();
             jobRequest.Success = false;
@@ -635,7 +685,7 @@ namespace CarWash.Areas.Api.Account.Controllers
 
             var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName);
             HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == idName).FirstOrDefault();
-            var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o=>o.Package).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
+            var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
             Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
             int sum = 1;
             var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
@@ -690,9 +740,11 @@ namespace CarWash.Areas.Api.Account.Controllers
                 jobname.ImageProfile = jobdb.Select(o => o.Customer.Image).FirstOrDefault();
                 jobname.Latitude = jobdb.Select(o => o.Latitude).FirstOrDefault();
                 jobname.Longitude = jobdb.Select(o => o.Longitude).FirstOrDefault();
+                string location = await ServiceCheck.LocationAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault());
+                jobname.Location= location;
                 jobname.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
                 jobname.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
-                jobname.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault()+".00 ฿";
+                jobname.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault() + ".00 ฿";
                 jobname.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
                 jobRequest.Success = true;
                 jobRequest.Message = "สำเร็จ";
@@ -780,17 +832,14 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return Ok();
         }
-       
-        
-        
-        
+
         [HttpPost]
-        public async Task<IActionResult> CusJobAsync([FromBody] ChatMessage chat )
+        public async Task<IActionResult> CusJobAsync([FromBody] ChatMessage chat)
         {
             BaseResponse response = new BaseResponse();
             try
             {
-                
+
                 string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int userId = int.Parse(Id);
@@ -804,25 +853,22 @@ namespace CarWash.Areas.Api.Account.Controllers
                 json.ChatId = chatDb.ChatId;
                 json.Name = chatDb.Name;
                 json.Message = chatDb.Message;
-                 string result = JsonConvert.SerializeObject(json);
+                string result = JsonConvert.SerializeObject(json);
                 await HubContext.Clients.All.SendAsync("ReceiveChat", result);
-                
-                response.Success =true;
+
+                response.Success = true;
                 response.Message = "สำเร็จ";
                 return Json(response);
             }
-            catch (Exception e)
+            catch(Exception)
             {
                 response.Success = false;
                 response.Message = "ไม่สำเร็จ";
                 return Json(response);
 
             }
-        
+
         }
-
-       
-
 
     }
 }

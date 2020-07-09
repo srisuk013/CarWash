@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CarWash.Areas.Api.Models.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,5 +13,7 @@ namespace CarWash.Areas.Api.Models
         public string Message { get; set; }
 
         public JobRequset Job { get; set; }
+
+        public LocationReponse location { get; set; }
     }
 }

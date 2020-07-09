@@ -1,9 +1,12 @@
 ﻿using CarWash.Areas.Api.Models;
 using CarWash.Areas.Api.Models.ModelsConst;
 using CarWash.Models.DBModels;
+using Firebase.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using System;
@@ -13,6 +16,8 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Image = System.Drawing.Image;
 using Size = System.Drawing.Size;
@@ -31,7 +36,7 @@ namespace CarWash.Service
         public static Boolean PhoneCheck(string phone)
         {
             bool Check = false;
-          
+
             if(phone.Length != 10)
             {
                 Check = true;
@@ -184,7 +189,7 @@ namespace CarWash.Service
             }
             else if(Id == Status.PendingApproval)
             {
-                code ="กรุณารอการอนุมัติ";
+                code = "กรุณารอการอนุมัติ";
             }
             return code;
         }
@@ -198,7 +203,7 @@ namespace CarWash.Service
         public static String CheckImage(int Id)
         {
             String folderNameImage = null;
-            if(Id==UpImage.FrontBefore)
+            if(Id == UpImage.FrontBefore)
             {
                 folderNameImage = UpImage.Desc.FrontBefore;
             }
@@ -214,7 +219,7 @@ namespace CarWash.Service
             {
                 folderNameImage = UpImage.Desc.RightBefore;
             }
-            else if(Id==UpImage.FrontAfter)
+            else if(Id == UpImage.FrontAfter)
             {
                 folderNameImage = UpImage.Desc.FrontAfter;
             }
@@ -237,7 +242,7 @@ namespace CarWash.Service
             return folderNameImage;
 
         }
-      
+
         public static int CheckIntImage(int type)
         {
             int code = 0;
@@ -275,6 +280,29 @@ namespace CarWash.Service
                 code = UpImage.RightBefore;
             }
             return code;
+        }
+        public static async Task<string> LocationAsync(Double lon, Double lat)
+        {
+            
+            string key = "&noelevation=1&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
+            string Longitude = "lon=" + "100.6501888";//lon.ToString();
+            string Latitude = "&lat=" + "13.7363456";//lat.ToString();
+            string Baseurl = "https://api.longdo.com/map/services/address?" + Longitude + Latitude + key;
+            Locations CusInFo = new Locations();
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                if(Res.IsSuccessStatusCode)
+                {
+                    string EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    CusInFo = JsonConvert.DeserializeObject<Locations>(EmpResponse);
+                }
+                return CusInFo.subdistrict+ " " + CusInFo.road;
+            }
+
         }
 
     }
