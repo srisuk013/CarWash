@@ -31,6 +31,7 @@ using MySqlX.XDevAPI.Relational;
 using System.Text;
 using System.Net.Http.Headers;
 using Stripe;
+using Org.BouncyCastle.Crypto;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -537,7 +538,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                         otherImage.Image = image.Image;
                         job.OtherImagesService.Add(otherImage);
                     }
-                
+
                     jobDb.Add(job);
                 }
                 historyResponse.Success = true;
@@ -618,14 +619,14 @@ namespace CarWash.Areas.Api.Account.Controllers
             jobreq.Longitude = job.Longitude;
             jobreq.PackageName = "ล้างสี";
             jobreq.VehicleRegistration = "อด285";
-            
+
             string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
             string empLongitude = "flon=" + job.Employee.Longitude.ToString(); ;
             string empLatitude = "&flat=" + job.Employee.Latitude.ToString();
             string cusLongitude = "&tlon=" + Longitude.ToString();
             string cusLatitude = "&tlat=" + Latitude.ToString();
             string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude + cusLatitude + cusLongitude + key;
-                        LocationReponse EmpInfo = new LocationReponse();
+            LocationReponse EmpInfo = new LocationReponse();
             using(var client = new HttpClient())
             {
                 //Passing service base url  
@@ -633,7 +634,7 @@ namespace CarWash.Areas.Api.Account.Controllers
 
                 client.DefaultRequestHeaders.Clear();
                 //Define request data format  
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));  
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
                 HttpResponseMessage Res = await client.GetAsync(Baseurl);
                 //Checking the response is successful or not which is sent using HttpClient  
@@ -643,8 +644,8 @@ namespace CarWash.Areas.Api.Account.Controllers
                     var EmpResponse = Res.Content.ReadAsStringAsync().Result;
 
                     //Deserializing the response recieved from web api and storing into the Employee list  
-                     EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
-                    
+                    EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
+
                 }
             }
             var Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
@@ -741,7 +742,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 jobname.Latitude = jobdb.Select(o => o.Latitude).FirstOrDefault();
                 jobname.Longitude = jobdb.Select(o => o.Longitude).FirstOrDefault();
                 string location = await ServiceCheck.LocationAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault());
-                jobname.Location= location;
+                jobname.Location = location;
                 jobname.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
                 jobname.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
                 jobname.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault() + ".00 ฿";
@@ -868,6 +869,73 @@ namespace CarWash.Areas.Api.Account.Controllers
 
             }
 
+        }
+
+        [HttpPost]
+
+        public async Task<IActionResult> BookingJobAsync([FromBody] ReqBookingJob req)
+        {
+
+            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int idName = int.Parse(Id);
+            Job job = new Job();
+            job.CustomerId = idName;
+            job.JobDateTime = DateTime.Now;
+            job.PackageId = req.PackageId;
+            job.CarId = req.CarId;
+            job.Latitude = req.Latitude;
+            job.Longitude = req.Longitude;
+            job.StatusName = JobStatus.Desc.BookingJob;
+            var Loc = ServiceCheck.LocationAsync(req.Longitude, req.Latitude);
+            job.Location = Loc.ToString();
+            BaseResponse bookingJob = new BaseResponse();
+            /* _context.Job.Add(job);
+             _context.SaveChanges();*/
+            var user = _context.User.Include(o => o.HomeScore).Where(o => o.Role == Role.Employee && o.State == State.On).ToList();
+            List<UserEmplocation> jobDb = new List<UserEmplocation>();
+            foreach(CarWash.Models.DBModels.User jobrole in user)
+            {
+                UserEmplocation userEmplocation = new UserEmplocation(jobrole);
+                double lat = userEmplocation.Latitude ??= 0;
+                double lon = userEmplocation.Longitude ??= 0;
+                double Location;
+                Location = ServiceCheck.CalculateDistance(req.Latitude, req.Longitude, lat!, lon);
+                if(Location < 10)
+                {
+                    // string showDistance = String.Format("{0:0.0}", Location);
+                    userEmplocation.Location = Location;
+                }
+                var users = _context.HomeScore.Where(o => o.EmployeeId == userEmplocation.UserId).OrderByDescending(o => o.Rating);
+                userEmplocation.Rating = users.Select(o => o.Rating).FirstOrDefault();
+                jobDb.Add(userEmplocation);
+            }
+            var filteredList = jobDb.OrderByDescending(o => o.Rating).ToList();
+            var Name = filteredList.OrderByDescending(o => o.Rating).FirstOrDefault();
+            JobRequset jobname = new JobRequset();
+            JobRequestResponse json = new JobRequestResponse();
+            var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.EmployeeId == Name.UserId).OrderByDescending(o => o.JobId);
+            jobname.JobId = jobdb.Select(o => o.JobId).FirstOrDefault();
+            jobname.EmployeeId = jobdb.Select(o => o.EmployeeId).FirstOrDefault();
+            jobname.FullName = jobdb.Select(o => o.Customer.FullName).FirstOrDefault();
+            jobname.Phone = jobdb.Select(o => o.Customer.Phone).FirstOrDefault();
+            jobname.ImageProfile = jobdb.Select(o => o.Customer.Image).FirstOrDefault();
+            jobname.Latitude = jobdb.Select(o => o.Latitude).FirstOrDefault();
+            jobname.Longitude = jobdb.Select(o => o.Longitude).FirstOrDefault();
+            string vLoc = await ServiceCheck.LocationAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault());
+            string showDistance = await ServiceCheck.DistanceAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault(), req.Longitude, req.Latitude);
+            jobname.Location = await Loc;
+            jobname.Distance = showDistance;
+            jobname.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
+            jobname.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
+            jobname.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault() + ".00 ฿";
+            jobname.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
+            json.Success = true;
+            json.Message = "สำเร็จ";
+            json.Job = jobname;
+            string result = JsonConvert.SerializeObject(json);
+            await HubContext.Clients.All.SendAsync("ReceiveChat", result);
+            return Json(bookingJob);
         }
 
     }

@@ -6,7 +6,8 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-     
+        
+
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
         {
@@ -34,7 +35,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-
+  
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<AspNetRoleClaims>(entity =>
@@ -218,11 +219,11 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Job>(entity =>
             {
-                entity.Property(e => e.CodeJob).HasMaxLength(50);
-
                 entity.Property(e => e.Comment).HasMaxLength(1000);
 
                 entity.Property(e => e.JobApprove).HasMaxLength(50);
+
+                entity.Property(e => e.Location).HasMaxLength(200);
 
                 entity.Property(e => e.Report).HasMaxLength(200);
 

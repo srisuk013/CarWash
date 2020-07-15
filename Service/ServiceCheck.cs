@@ -1,7 +1,9 @@
 ﻿using CarWash.Areas.Api.Models;
+using CarWash.Areas.Api.Models.Models;
 using CarWash.Areas.Api.Models.ModelsConst;
 using CarWash.Models.DBModels;
 using Firebase.Auth;
+using GeoCoordinatePortable;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
@@ -283,7 +285,7 @@ namespace CarWash.Service
         }
         public static async Task<string> LocationAsync(Double lon, Double lat)
         {
-            
+
             string key = "&noelevation=1&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
             string Longitude = "lon=" + "100.6501888";//lon.ToString();
             string Latitude = "&lat=" + "13.7363456";//lat.ToString();
@@ -300,9 +302,54 @@ namespace CarWash.Service
                     string EmpResponse = Res.Content.ReadAsStringAsync().Result;
                     CusInFo = JsonConvert.DeserializeObject<Locations>(EmpResponse);
                 }
-                return CusInFo.subdistrict+ " " + CusInFo.road;
+                return CusInFo.subdistrict;
             }
 
+        }
+
+        public static async Task<string> DistanceAsync(double emp1, double emp2, double cus1, double cus2)
+        {
+            string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
+            string empLongitude = "flon=" + emp1.ToString();
+            string empLatitude = "&flat=" + emp2.ToString();
+            string cusLongitude = "&tlon=" + cus1.ToString();
+            string cusLatitude = "&tlat=" + cus2.ToString();
+            string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude + cusLatitude + cusLongitude + key;
+            LocationReponse EmpInfo = new LocationReponse();
+            using(var client = new HttpClient())
+            {
+                //Passing service base url  
+                client.BaseAddress = new Uri(Baseurl);
+
+                client.DefaultRequestHeaders.Clear();
+                //Define request data format  
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                //Checking the response is successful or not which is sent using HttpClient  
+                if(Res.IsSuccessStatusCode)
+                {
+                    //Storing the response details recieved from web api   
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+
+                    //Deserializing the response recieved from web api and storing into the Employee list  
+                    EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
+                }
+                var Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
+                Double DistanceSum = (Distance / 1000);
+                string showDistance = String.Format("{0:0.0} km", DistanceSum);
+                return showDistance;
+            }
+        }
+        public static double CalculateDistance(double cuslat, double cuslon, double emplat, double emplon)
+        {
+            GeoCoordinate customer = new GeoCoordinate(cuslat, cuslon);
+            GeoCoordinate Employee = new GeoCoordinate(emplat, emplon);
+
+            double distanceBetween = customer.GetDistanceTo(Employee);
+            double DistanceSum = (distanceBetween / 1000);
+
+            return DistanceSum;
         }
 
     }

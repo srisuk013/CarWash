@@ -21,10 +21,10 @@ namespace CarWash.Models.DBModels
         public double Longitude { get; set; }
         public string StatusName { get; set; }
         public string JobApprove { get; set; }
-        public string CodeJob { get; set; }
         public string Report { get; set; }
         public int Price { get; set; }
         public string Comment { get; set; }
+        public string Location { get; set; }
 
         public virtual Car Car { get; set; }
         public virtual User Customer { get; set; }

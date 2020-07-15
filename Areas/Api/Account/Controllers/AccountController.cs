@@ -106,28 +106,32 @@ namespace CarWash.Areas.Account
                     response.Message = "กรุณาตรวจสอบPassword";
                     return Json(response);
                 }
-                Models.DBModels.User idCardNumberCheck = _context.User.Where(o => o.IdCardNumber == req.IdCardNumber).FirstOrDefault();
-                if(String.IsNullOrEmpty(req.IdCardNumber))
-                {
-                    response.Message = "กรุณากรอกIdCardNumber";
+                if(req.Role == Role.Employee)
+                {                           
+                    Models.DBModels.User idCardNumberCheck = _context.User.Where(o => o.IdCardNumber == req.IdCardNumber).FirstOrDefault();
+                    if(String.IsNullOrEmpty(req.IdCardNumber))
+                    {
+                        response.Message = "กรุณากรอกIdCardNumber";
 
-                    return Json(response);
+                        return Json(response);
+                    }
+                    else if(req.IdCardNumber.Length != 13)
+                    {
+                        response.Message = "เลขบัตรประชาชนให้ครบ13";
+                        return Json(response);
+                    }
+                    else if(idCardNumberCheck != null)
+                    {
+                        response.Message = "เลขบัตรประชาชนซ้ำ";
+                        return Json(response);
+                    }
+                    else if(ServiceCheck.VerifyPeopleID(req.IdCardNumber))
+                    {
+                        response.Message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
+                        return Json(response);
+                    }
                 }
-                else if(req.IdCardNumber.Length != 13)
-                {
-                    response.Message = "เลขบัตรประชาชนให้ครบ13";
-                    return Json(response);
-                }
-                else if(idCardNumberCheck != null)
-                {
-                    response.Message = "เลขบัตรประชาชนซ้ำ";
-                    return Json(response);
-                }
-                else if(ServiceCheck.VerifyPeopleID(req.IdCardNumber))
-                {
-                    response.Message = "กรุณากรอกเลขบัตรประชาชนให้ถูกต้อง";
-                    return Json(response);
-                }
+                
                 if(String.IsNullOrEmpty(req.Phone))
                 {
                     response.Message = "กรุณาใส่เบอร์";

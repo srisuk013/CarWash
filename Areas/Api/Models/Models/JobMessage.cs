@@ -1,16 +1,14 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using CarWash.Areas.Api.Models.ModelsReponse;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CarWash.Areas.Api.Models
+namespace CarWash.Hubs
 {
-    public class JobRequset
+    public class JobMessage
     {
         public int JobId { get; set; }
-
-        public int EmployeeId { get; set; }
         public string Phone { get; set; }
         public string ImageProfile { get; set; }
         public string FullName { get; set; }
@@ -22,5 +20,7 @@ namespace CarWash.Areas.Api.Models
         public string DateTime { get; set; }
         public string Distance { get; set; }
         public string Location { get; set; }
+        public string Timeout { get; set; }
+
     }
 }
