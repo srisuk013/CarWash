@@ -13,7 +13,7 @@ namespace CarWash.Models.DBModels
 
         public int JobId { get; set; }
         public int CustomerId { get; set; }
-        public int EmployeeId { get; set; }
+        public int? EmployeeId { get; set; }
         public int PackageId { get; set; }
         public int CarId { get; set; }
         public DateTime JobDateTime { get; set; }

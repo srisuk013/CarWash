@@ -312,9 +312,9 @@ namespace CarWash.Service
             string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
             string empLongitude = "flon=" + emp1.ToString();
             string empLatitude = "&flat=" + emp2.ToString();
-            string cusLongitude = "&tlon=" + cus1.ToString();
-            string cusLatitude = "&tlat=" + cus2.ToString();
-            string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude + cusLatitude + cusLongitude + key;
+            string cusLongitude = "&tlon=" + cus1.ToString();  
+            string cusLatitude = "&tlat=" + cus2.ToString();  
+            string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude+ cusLongitude + cusLatitude + key;
             LocationReponse EmpInfo = new LocationReponse();
             using(var client = new HttpClient())
             {
@@ -335,7 +335,7 @@ namespace CarWash.Service
                     //Deserializing the response recieved from web api and storing into the Employee list  
                     EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
                 }
-                var Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
+                double Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
                 Double DistanceSum = (Distance / 1000);
                 string showDistance = String.Format("{0:0.0} km", DistanceSum);
                 return showDistance;

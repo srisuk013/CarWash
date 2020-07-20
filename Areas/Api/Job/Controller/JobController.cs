@@ -32,6 +32,7 @@ using System.Text;
 using System.Net.Http.Headers;
 using Stripe;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Asn1.Cms;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -49,24 +50,24 @@ namespace CarWash.Areas.Api.Account.Controllers
 
         private readonly IHostingEnvironment _env;
         private readonly IHubContext<ChatHub> HubContext;
+        private readonly IHubContext<CarWashEmployeeHup> EmployeeHup;
+        private readonly IHubContext<TimeHub> TimeHup;
         private static string ApiKey = "AIzaSyA0xBPLP9vDxXdbsQ1PYkBROfs4-vYvB1M";
         private static string Bucket = "carwash-1e810.appspot.com";
         private static string AuthEmail = "Srisuk013@gmail.com";
         private static string AuthPassword = "ssss1111";
 
-
-
         // Create IPGeolocationAPI object, passing your valid API key
-
-
         public JobController(CarWashContext context, UserManager<IdentityUser> userManager,
-           SignInManager<IdentityUser> signInManager, IHostingEnvironment env, IHubContext<ChatHub> hubcontext)
+           SignInManager<IdentityUser> signInManager, IHostingEnvironment env, IHubContext<ChatHub> hubcontext, IHubContext<CarWashEmployeeHup> employeeHup, IHubContext<TimeHub> timeHup)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
             _env = env;
             HubContext = hubcontext;
+            EmployeeHup = employeeHup;
+            TimeHup = timeHup;
 
         }
         [HttpPost]
@@ -656,7 +657,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             jobreq.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
             jobRequest.Success = true;
             jobRequest.Message = "สำเร็จ";
-            jobRequest.location = EmpInfo;
+            //jobRequest.location = EmpInfo;
             jobRequest.Job = jobreq;
             return Json(jobRequest);
         }
@@ -709,6 +710,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
                 }
+
                 homeScore.Cancellation = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault() + sum;
                 homeScore.CreatedTime = DateTime.Now;
                 homeScore.MaxJob = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault() + sum;
@@ -722,7 +724,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 _context.SaveChanges();
                 return Json(jobRequest);
             }
-            else if(status.JobStatus == 1)
+            else if(status.JobStatus == JobStatus.BookingJob)
             {
                 if(homeScoreSum.Select(o => o.Acceptance)?.FirstOrDefault() == null)
                 {
@@ -730,6 +732,10 @@ namespace CarWash.Areas.Api.Account.Controllers
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
                 }
+                var joudb = _context.Job.Where(o => o.JobId == status.JobId).FirstOrDefault();
+                joudb.EmployeeId = idName;
+                _context.Job.Update(joudb);
+                _context.SaveChanges();
                 homeScore.Acceptance = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault() + sum;
                 homeScore.MaxJob = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault() + sum;
                 _context.HomeScore.Update(homeScore);
@@ -872,26 +878,99 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpPost]
-
         public async Task<IActionResult> BookingJobAsync([FromBody] ReqBookingJob req)
         {
+            try
+            {
+                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int idName = int.Parse(Id);
+                Job job = new Job();
+                job.CustomerId = idName;
+                job.JobDateTime = DateTime.Now;
+                job.PackageId = req.PackageId;
+                job.CarId = req.CarId;
+                job.Latitude = req.Latitude;
+                job.Longitude = req.Longitude;
+                job.StatusName = JobStatus.Desc.BookingJob;
+                var Loc = ServiceCheck.LocationAsync(req.Longitude, req.Latitude);
+                job.Location = Loc.ToString();
+                var reset = EmployeeIDAsync(req.Longitude, req.Latitude, job.JobId);
+                string vLoc = await ServiceCheck.LocationAsync(req.Latitude, req.Longitude);
+                job.Location = vLoc;
+                _context.Job.Add(job);
+                _context.SaveChanges();
+                JobRequset jobname = new JobRequset();
+                JobRequestResponse json = new JobRequestResponse();
+                var user = _context.User.Include(o => o.HomeScore).Where(o => o.Role == Role.Employee && o.State == State.On).ToList();
+                List<UserEmplocation> jobDb = new List<UserEmplocation>();
+                foreach(CarWash.Models.DBModels.User jobrole in user)
+                {
+                    UserEmplocation userEmplocation = new UserEmplocation(jobrole);
+                    double lat = userEmplocation.Latitude ??= 0;
+                    double lon = userEmplocation.Longitude ??= 0;
+                    double Location;
+                    Location = ServiceCheck.CalculateDistance(req.Latitude, req.Longitude, lat!, lon);
+                    if(Location < 10)
+                    {
+                        userEmplocation.Location = Location;
+                    }
+                    var users = _context.HomeScore.Where(o => o.EmployeeId == userEmplocation.UserId).OrderByDescending(o => o.Rating);
+                    userEmplocation.Rating = users.Select(o => o.Rating).FirstOrDefault();
+                    jobDb.Add(userEmplocation);
+                }
+                var filteredList = jobDb.OrderByDescending(o => o.Rating).ToList();
+                var listCount = (filteredList.Count() < 5) ? filteredList.Count() : 5;
+                for(int Index = 0; Index < listCount; Index++)
+                {
+                    var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.CustomerId == idName).OrderByDescending(o => o.JobId);
+                    var EmpId = jobdb.Select(o => o.EmployeeId).FirstOrDefault();
+                    if(EmpId == null)
+                    {
+                        jobname.JobId = jobdb.Select(o => o.JobId).FirstOrDefault();
+                        jobname.EmployeeId = filteredList[Index].UserId;
+                        var receiveEmployee = "ReceiveEmployee" + filteredList[Index].UserId;
+                        jobname.FullName = jobdb.Select(o => o.Customer.FullName).FirstOrDefault();
+                        jobname.Phone = jobdb.Select(o => o.Customer.Phone).FirstOrDefault();
+                        jobname.ImageProfile = jobdb.Select(o => o.Customer.Image).FirstOrDefault();
+                        var latlon = _context.User.Where(o => o.UserId == filteredList[Index].UserId).FirstOrDefault();
+                        double lon = latlon.Longitude ??= 0;
+                        double lat = latlon.Latitude ??= 0;
+                        string showDistance = await ServiceCheck.DistanceAsync(lon, lat, req.Longitude, req.Latitude);
+                        jobname.Location = vLoc;
+                        jobname.Distance = showDistance;
+                        jobname.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
+                        jobname.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
+                        jobname.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault() + ".00 ฿";
+                        jobname.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
+                        json.Success = true;
+                        json.Message = "สำเร็จ";
+                        json.Job = jobname;
+                        string result = JsonConvert.SerializeObject(json);
+                        await EmployeeHup.Clients.All.SendAsync(receiveEmployee, result);
+                        Thread.Sleep(18000);
+                    }
+                    var nameIdEmp = jobdb.Select(o => o.EmployeeId).FirstOrDefault();
+                    if(nameIdEmp != null)
+                    {
+                        BaseResponse response = new BaseResponse();
+                        response.Success = true;
+                        response.Message = "สำเร็จ";
+                        return Json(response);
+                    }
+                }
+            }
+            catch(Exception)
+            {
 
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
-            Job job = new Job();
-            job.CustomerId = idName;
-            job.JobDateTime = DateTime.Now;
-            job.PackageId = req.PackageId;
-            job.CarId = req.CarId;
-            job.Latitude = req.Latitude;
-            job.Longitude = req.Longitude;
-            job.StatusName = JobStatus.Desc.BookingJob;
-            var Loc = ServiceCheck.LocationAsync(req.Longitude, req.Latitude);
-            job.Location = Loc.ToString();
-            BaseResponse bookingJob = new BaseResponse();
-            /* _context.Job.Add(job);
-             _context.SaveChanges();*/
+            }
+            BaseResponse baseResponse = new BaseResponse();
+            baseResponse.Success = true;
+            baseResponse.Message = "ไม่มีพนักงานในพื่นที่";
+            return Json(baseResponse);
+        }
+        public async Task<int?> EmployeeIDAsync(double latemp, double lonemp, int jobid)
+        {
             var user = _context.User.Include(o => o.HomeScore).Where(o => o.Role == Role.Employee && o.State == State.On).ToList();
             List<UserEmplocation> jobDb = new List<UserEmplocation>();
             foreach(CarWash.Models.DBModels.User jobrole in user)
@@ -900,10 +979,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                 double lat = userEmplocation.Latitude ??= 0;
                 double lon = userEmplocation.Longitude ??= 0;
                 double Location;
-                Location = ServiceCheck.CalculateDistance(req.Latitude, req.Longitude, lat!, lon);
-                if(Location < 10)
+                Location = ServiceCheck.CalculateDistance(latemp, lonemp, lat!, lon);
+                if(Location <= 10)
                 {
-                    // string showDistance = String.Format("{0:0.0}", Location);
                     userEmplocation.Location = Location;
                 }
                 var users = _context.HomeScore.Where(o => o.EmployeeId == userEmplocation.UserId).OrderByDescending(o => o.Rating);
@@ -923,8 +1001,8 @@ namespace CarWash.Areas.Api.Account.Controllers
             jobname.Latitude = jobdb.Select(o => o.Latitude).FirstOrDefault();
             jobname.Longitude = jobdb.Select(o => o.Longitude).FirstOrDefault();
             string vLoc = await ServiceCheck.LocationAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault());
-            string showDistance = await ServiceCheck.DistanceAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault(), req.Longitude, req.Latitude);
-            jobname.Location = await Loc;
+            string showDistance = await ServiceCheck.DistanceAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault(), latemp, lonemp);
+            jobname.Location = vLoc;
             jobname.Distance = showDistance;
             jobname.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
             jobname.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
@@ -934,8 +1012,33 @@ namespace CarWash.Areas.Api.Account.Controllers
             json.Message = "สำเร็จ";
             json.Job = jobname;
             string result = JsonConvert.SerializeObject(json);
-            await HubContext.Clients.All.SendAsync("ReceiveChat", result);
-            return Json(bookingJob);
+            await EmployeeHup.Clients.All.SendAsync("ReceiveEmployee", result);
+            Thread.Sleep(1000);
+            for(int i = 15; i >= 0; i--)
+            {
+                TimerReponse countingTime = new TimerReponse();
+                CountingTime time = new CountingTime();
+                countingTime.Success = true;
+                countingTime.Message = "สำเร็จ";
+                time.Timer = i;
+                time.EmployeeId = Name.UserId;
+                countingTime.Timer = time;
+                string resultTime = JsonConvert.SerializeObject(countingTime);
+                await TimeHup.Clients.All.SendAsync("ReceiveTime", resultTime);
+                Thread.Sleep(1000);
+            }
+            Thread.Sleep(3000);
+            Job job = _context.Job.Where(o => o.JobId == jobid).FirstOrDefault();
+            if(job.EmployeeId == null)
+            {
+                var reset = EmployeeIDAsync(job.Longitude, job.Latitude, jobid);
+            }
+            else if(job.EmployeeId != null)
+            {
+                return job.EmployeeId;
+            }
+
+            return job.EmployeeId;
         }
 
     }

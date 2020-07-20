@@ -8,5 +8,7 @@ namespace CarWash.Areas.Api.Models
     public class ReqJobStatus
     {
         public int? JobStatus { get; set; }
+
+        public int JobId { get; set; }
     }
 }

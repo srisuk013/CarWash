@@ -52,7 +52,7 @@ namespace CarWash.Areas.Api.Models
             this.JobDateTime = dateStr;
             this.ImagesBeforeService = new List<ImageSevices>();
             this.Comment = job.Comment;
-            this.Location = "";
+            this.Location =job.Location;
             this.ImagesAfterService = new List<AfterImage>();
             this.OtherImagesService = new List<OtherImage>();
 

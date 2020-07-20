@@ -9,8 +9,7 @@ namespace CarWash.Areas.Api.Models
     public class JobRequset
     {
         public int JobId { get; set; }
-
-        public int EmployeeId { get; set; }
+        public int? EmployeeId { get; set; }
         public string Phone { get; set; }
         public string ImageProfile { get; set; }
         public string FullName { get; set; }

@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-        
+     
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -35,7 +35,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-  
+      
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<AspNetRoleClaims>(entity =>
@@ -244,7 +244,6 @@ namespace CarWash.Models.DBModels
                 entity.HasOne(d => d.Employee)
                     .WithMany(p => p.JobEmployee)
                     .HasForeignKey(d => d.EmployeeId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Job_User2");
 
                 entity.HasOne(d => d.Package)
@@ -263,7 +262,7 @@ namespace CarWash.Models.DBModels
                 entity.HasOne(d => d.Job)
                     .WithMany(p => p.OthrerImage)
                     .HasForeignKey(d => d.JobId)
-                    .HasConstraintName("FK_OthrerImage_Job");
+                    .HasConstraintName("FK_OthrerImage_Job1");
             });
 
             modelBuilder.Entity<Package>(entity =>

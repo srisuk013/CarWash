@@ -4,16 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CarWash.Areas.Api.Models
+namespace CarWash.Areas.Api.Models.ModelsReponse
 {
-    public class JobRequestResponse
+    public class TimerReponse
     {
         public bool Success { get; set; }
 
         public string Message { get; set; }
 
-        public JobRequset Job { get; set; }
-
-       // public LocationReponse location { get; set; }
+        public CountingTime Timer { get; set; }
     }
 }

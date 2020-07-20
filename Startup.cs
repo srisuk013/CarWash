@@ -169,6 +169,9 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             app.UseSignalR(routes => {
                 routes.MapHub<MoveViewHub>("/movehub");
                 routes.MapHub<ChatHub>("/chatHub");
+                routes.MapHub<CarWashEmployeeHup>("/CarWash/SignalR/EmployeeHub");
+                routes.MapHub<CarWashCustomerHub>("/CarWash/SignalR/CustomerHub");
+                routes.MapHub<TimeHub>("/CarWash/SignalR/TimeHub");
             });
 
 
