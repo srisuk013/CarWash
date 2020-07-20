@@ -601,67 +601,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             historyResponse.Histories = jobdb;
             return Json(historyResponse);
         }
-
-        [HttpPost]
-        public async Task<IActionResult> JobQuestionAsync()
-        {
-            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
-            Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
-            JobRequset jobreq = new JobRequset();
-            jobreq.JobId = job.JobId;
-            jobreq.FullName = "กัญญา เนื่องบุรี";
-            jobreq.ImageProfile = "https://scontent.fbkk5-4.fna.fbcdn.net/v/t1.0-9/p720x720/53656017_2208855455803733_6158198433413857280_o.jpg?_nc_cat=110&_nc_sid=110474&_nc_eui2=AeEZxZny9F1z_Es8eNXVpkL34Kgb6H0dL93gqBvofR0v3R-7JPOUsSuXE3rgjgsq98W7QpuSyxfOff3RNVrYCe8r&_nc_oc=AQkBIfTYrQlRZFmWKHQDAqTC4Ot9b2WnQOoVnDCrW3gNYFW3_PH8k06Ai_5c-up68RjbM6Wy63U9X7XwVxdvT1YZ&_nc_ht=scontent.fbkk5-4.fna&_nc_tp=6&oh=1f3c303c5fd39d4257d2dc6789123410&oe=5F0DAD45";
-
-            var Latitude = job.Latitude;
-            var Longitude = job.Longitude;
-            JobRequestResponse jobRequest = new JobRequestResponse();
-            jobreq.Longitude = job.Longitude;
-            jobreq.PackageName = "ล้างสี";
-            jobreq.VehicleRegistration = "อด285";
-
-            string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
-            string empLongitude = "flon=" + job.Employee.Longitude.ToString(); ;
-            string empLatitude = "&flat=" + job.Employee.Latitude.ToString();
-            string cusLongitude = "&tlon=" + Longitude.ToString();
-            string cusLatitude = "&tlat=" + Latitude.ToString();
-            string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude + cusLatitude + cusLongitude + key;
-            LocationReponse EmpInfo = new LocationReponse();
-            using(var client = new HttpClient())
-            {
-                //Passing service base url  
-                client.BaseAddress = new Uri(Baseurl);
-
-                client.DefaultRequestHeaders.Clear();
-                //Define request data format  
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
-                HttpResponseMessage Res = await client.GetAsync(Baseurl);
-                //Checking the response is successful or not which is sent using HttpClient  
-                if(Res.IsSuccessStatusCode)
-                {
-                    //Storing the response details recieved from web api   
-                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
-
-                    //Deserializing the response recieved from web api and storing into the Employee list  
-                    EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
-
-                }
-            }
-            var Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
-            Double DistanceSum = (Distance / 1000);
-            string showDistance = String.Format("{0:0.0} km", DistanceSum);
-            jobreq.Distance = showDistance;
-            jobreq.Price = "฿ 120.00";
-            jobreq.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
-            jobRequest.Success = true;
-            jobRequest.Message = "สำเร็จ";
-            //jobRequest.location = EmpInfo;
-            jobRequest.Job = jobreq;
-            return Json(jobRequest);
-        }
-
         [HttpPost]
 
         public async Task<IActionResult> JobAnswerAsync([FromBody] ReqJobStatus status)
@@ -895,7 +834,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 job.StatusName = JobStatus.Desc.BookingJob;
                 var Loc = ServiceCheck.LocationAsync(req.Longitude, req.Latitude);
                 job.Location = Loc.ToString();
-                var reset = EmployeeIDAsync(req.Longitude, req.Latitude, job.JobId);
+               // var reset = EmployeeIDAsync(req.Longitude, req.Latitude, job.JobId);
                 string vLoc = await ServiceCheck.LocationAsync(req.Latitude, req.Longitude);
                 job.Location = vLoc;
                 _context.Job.Add(job);
@@ -929,7 +868,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                     {
                         jobname.JobId = jobdb.Select(o => o.JobId).FirstOrDefault();
                         jobname.EmployeeId = filteredList[Index].UserId;
-                        var receiveEmployee = "ReceiveEmployee" + filteredList[Index].UserId;
+                        string receiveEmployee = "ReceiveEmployee" + filteredList[Index].UserId.ToString() ;
                         jobname.FullName = jobdb.Select(o => o.Customer.FullName).FirstOrDefault();
                         jobname.Phone = jobdb.Select(o => o.Customer.Phone).FirstOrDefault();
                         jobname.ImageProfile = jobdb.Select(o => o.Customer.Image).FirstOrDefault();
@@ -948,7 +887,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                         json.Job = jobname;
                         string result = JsonConvert.SerializeObject(json);
                         await EmployeeHup.Clients.All.SendAsync(receiveEmployee, result);
-                        Thread.Sleep(18000);
+                        Thread.Sleep(20000);
                     }
                     var nameIdEmp = jobdb.Select(o => o.EmployeeId).FirstOrDefault();
                     if(nameIdEmp != null)
@@ -965,8 +904,8 @@ namespace CarWash.Areas.Api.Account.Controllers
 
             }
             BaseResponse baseResponse = new BaseResponse();
-            baseResponse.Success = true;
-            baseResponse.Message = "ไม่มีพนักงานในพื่นที่";
+            baseResponse.Success = false;
+            baseResponse.Message = "ไม่สำเร็จ";
             return Json(baseResponse);
         }
         public async Task<int?> EmployeeIDAsync(double latemp, double lonemp, int jobid)
