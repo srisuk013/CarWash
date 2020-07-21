@@ -15,8 +15,6 @@ namespace CarWash.Areas.Api.Models
         public string ImageProfile;
         public string FullName;
         public string PackageName;
-        public Double Latitude;
-        public Double Longitude;
         public string VehicleRegistration;
         public string Price;
         public string JobDateTime;
@@ -25,12 +23,6 @@ namespace CarWash.Areas.Api.Models
         public List<OtherImage> OtherImagesService;
         public List<ImageSevices> ImagesBeforeService;
         public List<AfterImage> ImagesAfterService;
-
-
-
-
-
-
 
         public JobHistory()
         {
@@ -45,8 +37,6 @@ namespace CarWash.Areas.Api.Models
             this.ImageProfile = job.Customer.Image;
             this.FullName = job.Customer.FullName;
             this.PackageName = job.Package.PackageName;
-            this.Latitude = job.Latitude;
-            this.Longitude = job.Longitude;
             this.VehicleRegistration = job.Car.VehicleRegistration;
             this.Price = "฿ "+ job.Price+".00";
             this.JobDateTime = dateStr;

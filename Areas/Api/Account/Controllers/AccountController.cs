@@ -1,9 +1,6 @@
 ﻿using CarWash.Areas.Api.Account.Controllers;
 using CarWash.Areas.Api.Models;
 using CarWash.Areas.Api.Models.Models;
-using CarWash.Areas.Api.Models.ModelsConst;
-using CarWash.Areas.Api.Models.ModelsReponse;
-using CarWash.Hubs;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using Firebase.Auth;
@@ -19,7 +16,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -107,7 +103,7 @@ namespace CarWash.Areas.Account
                     return Json(response);
                 }
                 if(req.Role == Role.Employee)
-                {                           
+                {
                     Models.DBModels.User idCardNumberCheck = _context.User.Where(o => o.IdCardNumber == req.IdCardNumber).FirstOrDefault();
                     if(String.IsNullOrEmpty(req.IdCardNumber))
                     {
@@ -131,7 +127,6 @@ namespace CarWash.Areas.Account
                         return Json(response);
                     }
                 }
-                
                 if(String.IsNullOrEmpty(req.Phone))
                 {
                     response.Message = "กรุณาใส่เบอร์";
@@ -158,7 +153,6 @@ namespace CarWash.Areas.Account
                     response.Message = "ตรวจสอบRole";
                     return Json(response);
                 }
-
                 IdentityUser aspnetUser = new IdentityUser();
                 aspnetUser.UserName = req.Username;
                 aspnetUser.PhoneNumber = req.Phone;
@@ -347,6 +341,10 @@ namespace CarWash.Areas.Account
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                user.State = State.Off;
+                _context.User.Update(user);
+                _context.SaveChanges();
                 BaseResponse baseResponse = new BaseResponse();
                 await _signInManager.SignOutAsync();
                 baseResponse = new BaseResponse();
@@ -682,7 +680,6 @@ namespace CarWash.Areas.Account
             {
 
             }
-
             return Ok();
         }
         [HttpPost]
@@ -720,7 +717,6 @@ namespace CarWash.Areas.Account
             {
                 return BadRequest();
             }
-
         }
 
         [HttpPost]
@@ -758,7 +754,6 @@ namespace CarWash.Areas.Account
             return Json(response);
 
         }
-
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public async Task<IActionResult> ChangeProfile([FromForm] IFormFile file)

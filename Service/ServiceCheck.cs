@@ -59,7 +59,6 @@ namespace CarWash.Service
             }
             return Check;
         }
-
         public static Boolean VerifyPeopleID(String pid)
         {
             string idc = pid.Substring(0, 12);
@@ -142,13 +141,6 @@ namespace CarWash.Service
             }
             return Check;
         }
-        /// <summary>
-        /// Resize the image to the specified width and height.
-        /// </summary>
-        /// <param name="image">The image to resize.</param>
-        /// <param name="width">The width to resize to.</param>
-        /// <param name="height">The height to resize to.</param>
-        /// <returns>The resized image.</returns>
         public static Image ResizeImage(Image image, int width, int height)
         {
             var destRect = new System.Drawing.Rectangle(0, 0, width, height);
@@ -172,10 +164,6 @@ namespace CarWash.Service
             }
 
             return destImage;
-        }
-        public static Image resizeImage(Image image, Size size)
-        {
-            return (Image)(new Bitmap(image, size));
         }
         public static String Check(String phone, int? Id)
         {
@@ -244,52 +232,14 @@ namespace CarWash.Service
             return folderNameImage;
 
         }
-
-        public static int CheckIntImage(int type)
-        {
-            int code = 0;
-
-            if(type == UpImage.FrontBefore)
-            {
-                code = UpImage.FrontBefore;
-            }
-            else if(type == UpImage.BackBefore)
-            {
-                code = UpImage.BackBefore;
-            }
-            else if(type == UpImage.LaftBefore)
-            {
-                code = UpImage.LaftBefore;
-            }
-            else if(type == UpImage.RightBefore)
-            {
-                code = UpImage.RightBefore;
-            }
-            else if(type == UpImage.FrontAfter)
-            {
-                code = UpImage.FrontAfter;
-            }
-            else if(type == UpImage.BackAfter)
-            {
-                code = UpImage.BackAfter;
-            }
-            else if(type == UpImage.LaftAfter)
-            {
-                code = UpImage.LaftAfter;
-            }
-            else if(type == UpImage.RightBefore)
-            {
-                code = UpImage.RightBefore;
-            }
-            return code;
-        }
         public static async Task<string> LocationAsync(Double lon, Double lat)
         {
 
-            string key = "&noelevation=1&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
-            string Longitude = "lon=" + "100.6501888";//lon.ToString();
-            string Latitude = "&lat=" + "13.7363456";//lat.ToString();
-            string Baseurl = "https://api.longdo.com/map/services/address?" + Longitude + Latitude + key;
+            string Longitude = "lon=" + lon;
+            string Latitude = "&lat=" + lat;
+            string noelevation = "&noelevation=1";
+            string key = "&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
+            string Baseurl = "https://api.longdo.com/map/services/address?" + Longitude+ Latitude + noelevation + key;
             Locations CusInFo = new Locations();
             using(var client = new HttpClient())
             {
@@ -299,28 +249,27 @@ namespace CarWash.Service
                 HttpResponseMessage Res = await client.GetAsync(Baseurl);
                 if(Res.IsSuccessStatusCode)
                 {
-                    string EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
                     CusInFo = JsonConvert.DeserializeObject<Locations>(EmpResponse);
                 }
                 return CusInFo.subdistrict;
             }
 
         }
-
-        public static async Task<string> DistanceAsync(double emp1, double emp2, double cus1, double cus2)
+        public static async Task<string> DistanceAsync(double emplon, double emplat, double cuslon, double cuslat)
         {
             string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
-            string empLongitude = "flon=" + emp1.ToString();
-            string empLatitude = "&flat=" + emp2.ToString();
-            string cusLongitude = "&tlon=" + cus1.ToString();  
-            string cusLatitude = "&tlat=" + cus2.ToString();  
+            string empLongitude = "flon=" + emplon.ToString();
+            string empLatitude = "&flat=" + emplat.ToString();
+            string cusLongitude = "&tlon=" + cuslon.ToString();  
+            string cusLatitude = "&tlat=" + cuslat.ToString();
+            
             string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude+ cusLongitude + cusLatitude + key;
             LocationReponse EmpInfo = new LocationReponse();
             using(var client = new HttpClient())
             {
                 //Passing service base url  
                 client.BaseAddress = new Uri(Baseurl);
-
                 client.DefaultRequestHeaders.Clear();
                 //Define request data format  
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -331,7 +280,6 @@ namespace CarWash.Service
                 {
                     //Storing the response details recieved from web api   
                     var EmpResponse = Res.Content.ReadAsStringAsync().Result;
-
                     //Deserializing the response recieved from web api and storing into the Employee list  
                     EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
                 }

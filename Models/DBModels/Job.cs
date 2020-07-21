@@ -25,6 +25,7 @@ namespace CarWash.Models.DBModels
         public int Price { get; set; }
         public string Comment { get; set; }
         public string Location { get; set; }
+        public int? StatusId { get; set; }
 
         public virtual Car Car { get; set; }
         public virtual User Customer { get; set; }
