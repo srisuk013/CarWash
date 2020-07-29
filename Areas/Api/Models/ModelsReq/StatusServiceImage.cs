@@ -10,5 +10,7 @@ namespace CarWash.Areas.Api.Models.ModelsReq
     {
         public int StatusService { get; set; }
         public IFormFile File { get; set; }
+
+        public int ImageId { get; set; }
     }
 }

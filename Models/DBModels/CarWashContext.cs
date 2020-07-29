@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-    
+       
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -30,6 +30,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Job> Job { get; set; }
         public virtual DbSet<OthrerImage> OthrerImage { get; set; }
         public virtual DbSet<Package> Package { get; set; }
+        public virtual DbSet<Province> Province { get; set; }
         public virtual DbSet<User> User { get; set; }
         public virtual DbSet<UserLogs> UserLogs { get; set; }
         public virtual DbSet<Wallet> Wallet { get; set; }
@@ -142,6 +143,17 @@ namespace CarWash.Models.DBModels
                     .HasForeignKey(d => d.BrandId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Car_CarBrand");
+
+                entity.HasOne(d => d.Model_)
+                    .WithMany(p => p.Car)
+                    .HasForeignKey(d => d.Model_Id)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Car_CarModel");
+
+                entity.HasOne(d => d.Province)
+                    .WithMany(p => p.Car)
+                    .HasForeignKey(d => d.ProvinceId)
+                    .HasConstraintName("FK_Car_Province");
             });
 
             modelBuilder.Entity<CarBrand>(entity =>
@@ -289,6 +301,11 @@ namespace CarWash.Models.DBModels
                     .HasForeignKey(d => d.SizeId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Package_CarSize");
+            });
+
+            modelBuilder.Entity<Province>(entity =>
+            {
+                entity.Property(e => e.ProvinceName).HasMaxLength(100);
             });
 
             modelBuilder.Entity<User>(entity =>

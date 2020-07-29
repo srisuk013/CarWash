@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.Models
 {
-    public class HomeScoreResponse : BaseResponse
+    public class Listprovince
     {
-        public HomeScoreModel HomeScore { get; set; }
-        public int SwitchFlag { get; set; }
+        public int ProvinceId { get; set; }
+
+        public string ProvinceName { get; set; }
+
     }
 }

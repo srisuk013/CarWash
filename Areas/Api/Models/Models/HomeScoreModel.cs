@@ -7,9 +7,11 @@ namespace CarWash.Areas.Api.Models.Models
 {
     public class HomeScoreModel
     {
-        public String Ratings { get; set; }
-        public String Acceptance { get; set; }
-        public String Cancellation { get; set; }
+        public string Ratings { get; set; }
+        public string Acceptance { get; set; }
+        public string Cancellation { get; set; }
+
+     
 
     }
 }

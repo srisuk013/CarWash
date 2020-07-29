@@ -13,8 +13,8 @@ namespace CarWash.Areas.Api.Models
 
         public class Desc
         {
-            public const string off = "Offline";
-            public const string On = "Online";
+            public const string off = "Off";
+            public const string On = "On";
 
         }
     }

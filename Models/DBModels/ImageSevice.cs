@@ -5,7 +5,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class ImageSevice
     {
-        public int ImageId { get; set; }
+        public int? ImageId { get; set; }
         public int? JobId { get; set; }
         public string FrontBefore { get; set; }
         public string BackBefore { get; set; }
@@ -15,7 +15,6 @@ namespace CarWash.Models.DBModels
         public string BackAfter { get; set; }
         public string LaftAfter { get; set; }
         public string RightAfter { get; set; }
-
         public virtual Job Job { get; set; }
     }
 }

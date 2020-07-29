@@ -5,6 +5,11 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarModel
     {
+        public CarModel()
+        {
+            Car = new HashSet<Car>();
+        }
+
         public int Model_Id { get; set; }
         public int? BrandId { get; set; }
         public string ModelName { get; set; }
@@ -12,5 +17,6 @@ namespace CarWash.Models.DBModels
 
         public virtual CarBrand Brand { get; set; }
         public virtual CarSize Size { get; set; }
+        public virtual ICollection<Car> Car { get; set; }
     }
 }

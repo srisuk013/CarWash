@@ -6,12 +6,8 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.ModelsReponse
 {
-    public class TimerReponse
+    public class ShowInformationReponse :BaseResponse
     {
-        public bool Success { get; set; }
-
-        public string Message { get; set; }
-
-        public CountingTime Timer { get; set; }
+        public ShowModelCar Shows { get; set; }
     }
 }

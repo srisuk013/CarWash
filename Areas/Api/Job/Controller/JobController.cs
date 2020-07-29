@@ -23,16 +23,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using GeoCoordinatePortable;
-using System.Net;
-using Microsoft.AspNetCore.Http;
-using System.Net.Http;
-using MySqlX.XDevAPI.Relational;
-using System.Text;
-using System.Net.Http.Headers;
-using Stripe;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Asn1.Cms;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -293,7 +283,6 @@ namespace CarWash.Areas.Api.Account.Controllers
                             var nameImage = ServiceCheck.CheckImage(image.StatusService);
                             Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
                             OthrerImage other = new OthrerImage();
-                            ImageSevice service = _context.ImageSevice.Where(o => o.JobId == job.JobId).FirstOrDefault();
                             var serviceDb = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == job.JobId);
                             string name = null;
                             DateTime date = DateTime.UtcNow.AddDays(7);
@@ -348,55 +337,115 @@ namespace CarWash.Areas.Api.Account.Controllers
                                 .Child($"{(name)}.jpg")
                                 .PutAsync(stream, cancellation.Token);
                             var ImageUrl = await upload;
-                            if(image.StatusService >= 1 && image.StatusService <= 8)
+                            ImageSevice sevicedb = _context.ImageSevice.Where(o => o.ImageId == image.ImageId).FirstOrDefault();
+                            if(sevicedb == null)
                             {
-                                if(image.StatusService == 1)
+                                ImageSevice sevice = new ImageSevice();
+                                sevice.JobId = job.JobId;
+                                if(image.StatusService >= 1 && image.StatusService <= 8)
                                 {
-                                    service.FrontBefore = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
+                                    if(image.StatusService == 1)
+                                    {
+                                        sevice.FrontBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 2)
+                                    {
+                                        sevice.BackBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 3)
+                                    {
+                                        sevice.LaftBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 4)
+                                    {
+                                        sevice.RightBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 5)
+                                    {
+                                        sevice.FrontAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 6)
+                                    {
+                                        sevice.BackAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 7)
+                                    {
+                                        sevice.LaftAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 8)
+                                    {
+                                        sevice.RightAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevice);
+                                        _context.SaveChanges();
+                                    }
                                 }
-                                else if(image.StatusService == 2)
+                            }
+                            else if(sevicedb != null)
+                            {
+                                if(image.StatusService >= 1 && image.StatusService <= 8)
                                 {
-                                    service.BackBefore = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
-                                }
-                                else if(image.StatusService == 3)
-                                {
-                                    service.LaftBefore = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
-                                }
-                                else if(image.StatusService == 4)
-                                {
-                                    service.RightBefore = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
-                                }
-                                else if(image.StatusService == 5)
-                                {
-                                    service.FrontAfter = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
-                                }
-                                else if(image.StatusService == 6)
-                                {
-                                    service.BackAfter = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
-                                }
-                                else if(image.StatusService == 7)
-                                {
-                                    service.LaftAfter = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
-                                }
-                                else if(image.StatusService == 8)
-                                {
-                                    service.RightAfter = ImageUrl;
-                                    _context.ImageSevice.Update(service);
-                                    _context.SaveChanges();
+                                    if(image.StatusService == 1)
+                                    {
+                                        sevicedb.FrontBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 2)
+                                    {
+                                        sevicedb.BackBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 3)
+                                    {
+                                        sevicedb.LaftBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 4)
+                                    {
+                                        sevicedb.RightBefore = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 5)
+                                    {
+                                        sevicedb.FrontAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 6)
+                                    {
+                                        sevicedb.BackAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 7)
+                                    {
+                                        sevicedb.LaftAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
+                                    else if(image.StatusService == 8)
+                                    {
+                                        sevicedb.RightAfter = ImageUrl;
+                                        _context.ImageSevice.Update(sevicedb);
+                                        _context.SaveChanges();
+                                    }
                                 }
                             }
                             else if(image.StatusService == UpImage.OtherImage)
@@ -416,6 +465,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                             serviceImage.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
                             serviceImage.LeftAfter = serviceDb.Select(o => o.LaftAfter).FirstOrDefault();
                             serviceImage.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();
+                            serviceImage.ImageId = serviceDb.Select(o => o.ImageId).FirstOrDefault();
                             List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
                             foreach(OthrerImage images in Jobimage)
                             {
@@ -429,6 +479,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                             response.Message = "อัพรูปสำเร็จ";
                             response.ServiceImage = serviceImage;
                             return Json(response);
+
                         }
                     }
                 }
@@ -439,6 +490,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             return BadRequest();
         }
+
 
         [HttpPost]
         public IActionResult Navigation([FromBody] ReqNavigation req)
@@ -551,9 +603,10 @@ namespace CarWash.Areas.Api.Account.Controllers
             DateTime datebegin = ServiceCheck.DateTime(DateBegin.Value);
             DateTime dateEnd = ServiceCheck.DateTime(DateEnd.Value);
             var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).ToList();
+           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd ).Where(o=>o.Report==null).ToList();
             foreach(Job HistoryJob in JobDb)
             {
+
                 JobHistory job = new JobHistory(HistoryJob);
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
                 List<ImageSevice> imageSevices = _context.ImageSevice.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
@@ -611,7 +664,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 jobRequest.Message = "ไม่ได้ส่งJobStatus";
                 return Json(jobRequest);
             }
-            else if(status.JobStatus >= 0 && status.JobStatus >= 1 && status.JobStatus >= 2)
+            else if(status.JobStatus != 0 && status.JobStatus != 2 && status.JobStatus != 1)
             {
                 jobRequest.Message = "JobStatusไม่ถูกกต้อง";
                 return Json(jobRequest);
@@ -647,6 +700,8 @@ namespace CarWash.Areas.Api.Account.Controllers
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
                 }
+                var userstate = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                userstate.State = State.On;
                 homeScore.Cancellation = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault() + sum;
                 homeScore.CreatedTime = DateTime.Now;
                 homeScore.MaxJob = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault() + sum;
@@ -656,6 +711,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 jobRequest.Success = false;
                 jobRequest.Message = "สำเร็จ";
                 jobRequest.Job = null;
+                _context.User.Update(userstate);
                 _context.Job.Update(job);
                 _context.SaveChanges();
                 return Json(jobRequest);
@@ -705,8 +761,11 @@ namespace CarWash.Areas.Api.Account.Controllers
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
                 }
+                var userstate = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                userstate.State = State.On;
                 homeScore.Timeout = homeScoreSum.Select(o => o.Timeout).FirstOrDefault() + sum;
                 _context.HomeScore.Update(homeScore);
+                _context.User.Update(userstate);
                 _context.SaveChanges();
                 jobRequest.Success = false;
                 jobRequest.Message = "หมดเวลารับงาน";
@@ -769,7 +828,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 int userId = int.Parse(Id);
                 CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
-                job.Comment = req.Report;
+                job.Report = req.Report;
                 user.State = State.On;
                 _context.User.Update(user);
                 _context.Job.Update(job);
@@ -871,13 +930,14 @@ namespace CarWash.Areas.Api.Account.Controllers
                     if(EmpId == null)
                     {
                         var statusid = jobdb.Select(o => o.StatusId).FirstOrDefault();
-                        if(statusid==1)
+                        if(statusid == 1)
                         {
 
                             var statename = _context.User.Where(o => o.UserId == filteredList[Index].UserId);
                             var state = statename.Select(o => o.State).FirstOrDefault();
                             if(state == 1)
                             {
+
                                 jobname.JobId = jobdb.Select(o => o.JobId).FirstOrDefault();
                                 jobname.EmployeeId = filteredList[Index].UserId;
                                 string receiveEmployee = "ReceiveEmployee" + filteredList[Index].UserId.ToString();
@@ -899,6 +959,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                                 json.Job = jobname;
                                 string result = JsonConvert.SerializeObject(json);
                                 await EmployeeHup.Clients.All.SendAsync(receiveEmployee, result);
+                                var userstate = _context.User.Where(o => o.UserId == filteredList[Index].UserId).FirstOrDefault();
+                                userstate.State = State.Off;
+                                _context.User.Update(userstate);
                                 Thread.Sleep(20000);
                             }
                         }

@@ -16,8 +16,11 @@ namespace CarWash.Models.DBModels
         public int BrandId { get; set; }
         public int Model_Id { get; set; }
         public string Image { get; set; }
+        public int? ProvinceId { get; set; }
 
         public virtual CarBrand Brand { get; set; }
+        public virtual CarModel Model_ { get; set; }
+        public virtual Province Province { get; set; }
         public virtual ICollection<Job> Job { get; set; }
     }
 }

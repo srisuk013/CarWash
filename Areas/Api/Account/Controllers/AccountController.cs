@@ -661,6 +661,18 @@ namespace CarWash.Areas.Account
                         _context.HomeScore.Update(homeScore);
                         _context.SaveChanges();
                     }
+                    var user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
+                    var switchupdate = user.State;
+                    switch(switchupdate)
+                    {
+                        case 0:
+                            home.SwitchFlag = State.Off;
+                            break;
+                        case 1:
+                            home.SwitchFlag = State.On;
+                            break;
+
+                    }
                     double? ratings = ((ScoreSum / jobSum));
                     string showratings = String.Format("{0:0}", ratings);
                     model.Ratings = showratings + ".00";
