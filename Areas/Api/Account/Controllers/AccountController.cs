@@ -1,6 +1,7 @@
 ﻿using CarWash.Areas.Api.Account.Controllers;
 using CarWash.Areas.Api.Models;
 using CarWash.Areas.Api.Models.Models;
+using CarWash.Areas.Api.Models.ModelsResponse;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using Firebase.Auth;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -175,7 +177,7 @@ namespace CarWash.Areas.Account
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);
                     if(roleResult == IdentityResult.Success)
                     {
-
+                        SignInResponse signIn = new SignInResponse();
                         Models.DBModels.User user = new Models.DBModels.User();
                         user.AspNetRole = roleName;
                         user.AspNetUserId = aspnetUser.Id;
@@ -183,7 +185,14 @@ namespace CarWash.Areas.Account
                         user.UpdatedTime = DateTime.Now;
                         user.State = State.Off;
                         user.Role = req.Role;
-                        user.Status = Status.PendingApproval;
+                        if(req.Role == Role.Employee)
+                        {
+                            user.Status = Status.PendingApproval;
+                        }
+                        else
+                        {
+                            user.Status = Status.Active;
+                        }
                         var CodeId = RunnigCodeId(req.Role);
                         user.Code = CodeId;
                         user.Image = await UpProfileAsync(req.file, CodeId);
@@ -193,6 +202,16 @@ namespace CarWash.Areas.Account
                         user.IdCardNumber = req.IdCardNumber;
                         _context.User.Add(user);
                         _context.SaveChanges();
+                        if(req.Role == Role.Customer)
+                        {
+                            Api.Models.Models.Token token = new Api.Models.Models.Token();
+                            token.AccessToken = Token(req.Username, user.UserId.ToString(), CodeId, 7);
+                            token.RefreshToken = Token(req.Username, user.UserId.ToString(), CodeId, 8);
+                            signIn.Token = token;
+                            signIn.Success = true;
+                            signIn.Message = "Sign up success";
+                            return Json(signIn);
+                        }
                         response.Success = true;
                         response.Message = "Sign up success";
                         return Json(response);
@@ -277,36 +296,18 @@ namespace CarWash.Areas.Account
                 Microsoft.AspNetCore.Identity.SignInResult signInResult = await _signInManager.PasswordSignInAsync(aspnetUserCheck, login.Password, false, false);
                 if(signInResult.Succeeded)
                 {
-                    DateTime dateToken = DateTime.UtcNow.AddDays(7);
-                    long unixTime1 = ((DateTimeOffset)dateToken).ToUnixTimeSeconds();
-                    Dictionary<String, Object> payloadBody = new Dictionary<String, Object>
-                    {
-                        { "issuer" , "Carwash-wed-App"},
-                        { "audience" , "Carwash" },
-                        { "sub", "CarWash-Api"},
-                        { "username", user.Username},
-                        { "user_id", user.UserId },
-                        { "Code", user.Code },
-                        { "exp", unixTime1 },
-                        { "alg", "HS256"}
-                    };
-                    DateTime dateRefreshToken = DateTime.UtcNow.AddDays(8);
-                    long unixTime = ((DateTimeOffset)dateRefreshToken).ToUnixTimeSeconds();
-                    Dictionary<String, Object> payloadBodyRe = new Dictionary<String, Object>
-                    {
-                        { "issuer" , "Carwash-wed-App"},
-                        { "audience" , "Carwash" },
-                        { "sub", "CarWash-Api"},
-                        { "username", user.Username},
-                        { "user_id", user.UserId },
-                        { "Code", user.Code },
-                        { "exp", unixTime},
-                        { "alg", "HS256"}
-                    };
+                    var idname = user.UserId;
+                    Models.DBModels.User userId = _context.User.Where(o => o.UserId == idname).FirstOrDefault();
+                    UserInfoV1 userInfo = new UserInfoV1(userId);
                     signInResponse.Success = true;
                     signInResponse.Message = "เข้าสู่ระบบสำเร็จ";
-                    signInResponse.Token = Service.Issue(payloadBody);
-                    signInResponse.RefreshToken = Service.Issue(payloadBodyRe);
+                    var codeId = userId.Code;
+                    Api.Models.Models.Token token = new Api.Models.Models.Token();
+                    token.AccessToken = Token(login.Username, user.UserId.ToString(), codeId, 7);
+                    token.RefreshToken = Token(login.Username, user.UserId.ToString(), codeId, 8);
+                    signInResponse.Token = token;
+                    signInResponse.UserInfo = userInfo;
+
                     return Json(signInResponse);
                 }
                 if(signInResult.IsLockedOut)
@@ -388,12 +389,11 @@ namespace CarWash.Areas.Account
             }
             return Ok();
         }
-
         [HttpPost]
         [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult ChangePhone([FromBody] ReqChangePhone reqChangePhone)
         {
-            BaseResponse response = new BaseResponse();
+            UserResponse response = new UserResponse();
             response.Success = false;
             if(String.IsNullOrEmpty(reqChangePhone.Phone))
             {
@@ -418,7 +418,6 @@ namespace CarWash.Areas.Account
             }
             try
             {
-
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
@@ -426,6 +425,9 @@ namespace CarWash.Areas.Account
                 user.Phone = reqChangePhone.Phone;
                 _context.User.Update(user);
                 _context.SaveChanges();
+                Models.DBModels.User userV1 = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                UserInfoV1 userInfo = new UserInfoV1(userV1);
+                response.UserInfo = userInfo;
                 response.Success = true;
                 response.Message = "เปลี่ยนเบอร์แล้ว";
                 return Json(response);
@@ -519,7 +521,7 @@ namespace CarWash.Areas.Account
         [HttpPost]
         public IActionResult CheckPhone([FromBody] ReqCheckPhone req)
         {
-            BaseResponse response = new BaseResponse();
+            PhoneResponse response = new PhoneResponse();
             response.Success = false;
             if(String.IsNullOrEmpty(req.Phone))
             {
@@ -546,6 +548,7 @@ namespace CarWash.Areas.Account
             }
             else
             {
+                response.Phone = req.Phone;
                 response.Success = true;
                 response.Message = "สำเร็จ";
                 return Json(response);
@@ -808,9 +811,11 @@ namespace CarWash.Areas.Account
                             user.Image = ImageUrl;
                             _context.User.Update(user);
                             _context.SaveChanges();
-                            BaseResponse response = new BaseResponse();
+                            UserResponse response = new UserResponse();
+                            UserInfoV1 userInfo = new UserInfoV1(user);
                             response.Success = true;
                             response.Message = "เปลี่ยนรูปสำเร็จ";
+                            response.UserInfo = userInfo;
                             return Json(response);
                         }
                     }
@@ -822,6 +827,27 @@ namespace CarWash.Areas.Account
                 return BadRequest(ex);
             }
             return BadRequest();
+        }
+
+
+        public string Token(string user, string id, string code, int day)
+        {
+            DateTime dateToken = DateTime.UtcNow.AddDays(day);
+            long unixTime1 = ((DateTimeOffset)dateToken).ToUnixTimeSeconds();
+            Dictionary<String, Object> payloadBody = new Dictionary<String, Object>
+                    {
+                        { "issuer" , "Carwash-wed-App"},
+                        { "audience" , "Carwash" },
+                        { "sub", "CarWash-Api"},
+                        { "username", user},
+                        { "user_id", id },
+                        { "Code", code},
+                        { "exp", unixTime1 },
+                        { "alg", "HS256"}
+                    };
+            var AccessToken = Service.Issue(payloadBody);
+
+            return AccessToken;
         }
 
     }

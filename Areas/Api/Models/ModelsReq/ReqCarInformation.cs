@@ -8,6 +8,8 @@ namespace CarWash.Areas.Api.Models.Models
 {
     public class ReqCarInformation
     {
+
+        public int ImageId { get; set; } 
         public string  VehicleRegistration { get; set; } 
 
         public int province { get; set; }

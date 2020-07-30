@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CarWash.Areas.Api.Models;
+using CarWash.Areas.Api.Models.Models;
 using CarWash.Models.DBModels;
 using CarWash.Service;
 using JWT;
@@ -75,8 +76,10 @@ namespace CarWash.Areas.Api.Account.Controllers
                 SignInResponse signInResponse = new SignInResponse();
                 signInResponse.Success = true;
                 signInResponse.Message = "สำเร็จ";
-                signInResponse.Token = Service.Issue(payloadBody);
-                signInResponse.RefreshToken = Service.Issue(payloadBodyRe);
+                Token token = new Token();
+                token.AccessToken = Service.Issue(payloadBody);
+                token.RefreshToken = Service.Issue(payloadBodyRe);
+                signInResponse.Token = token;
                 return Json(signInResponse);
             }
             catch(Exception)

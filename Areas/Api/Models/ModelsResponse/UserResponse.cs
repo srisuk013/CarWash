@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CarWash.Areas.Api.Models.ModelsReponse
+namespace CarWash.Areas.Api.Models.ModelsResponse
 {
-    public class ShowInformationReponse :BaseResponse
+    public class UserResponse  :BaseResponse
     {
-        public ShowModelCar Shows { get; set; }
+        public UserInfoV1 UserInfo { get; set; }
     }
 }

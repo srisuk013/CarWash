@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-       
+     
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -36,7 +36,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
- 
+       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -132,8 +132,6 @@ namespace CarWash.Models.DBModels
 
             modelBuilder.Entity<Car>(entity =>
             {
-                entity.Property(e => e.Image).HasMaxLength(200);
-
                 entity.Property(e => e.VehicleRegistration)
                     .IsRequired()
                     .HasMaxLength(50);

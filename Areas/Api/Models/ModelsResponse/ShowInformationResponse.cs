@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.ModelsReponse
 {
-    public class ImageServiceReponse  : BaseResponse
+    public class ShowInformationResponse :BaseResponse
     {
-         public ServiceImage ServiceImage { get; set; }
+        public ShowModelCar Shows { get; set; }
     }
 }

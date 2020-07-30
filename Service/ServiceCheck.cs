@@ -9,20 +9,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Image = System.Drawing.Image;
-using Size = System.Drawing.Size;
+
 
 namespace CarWash.Service
 {
@@ -299,6 +295,7 @@ namespace CarWash.Service
 
             return DistanceSum;
         }
+       
 
     }
 }

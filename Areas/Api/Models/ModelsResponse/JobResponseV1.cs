@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.ModelsReponse
 {
-    public class JobReponseV1
+    public class JobResponseV1
     {
         public bool Success { get; set; }
 
