@@ -11,12 +11,13 @@ using CarWash.Models.DBModels;
 using CarWash.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
     [Area("Api")]
     [Route("Api/Customer/[Action]")]
-    [ServiceFilter(typeof(CarWashAuthorization))]
+
 
     public class CustomerController : Controller
     {
@@ -28,6 +29,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             _context = context;
         }
         [HttpGet]
+        [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult ListCarInformation()
         {
             string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
@@ -62,6 +64,7 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult CarInformation([FromBody] ReqCarInformation req)
         {
             string claimuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
@@ -131,6 +134,8 @@ namespace CarWash.Areas.Api.Account.Controllers
         }
 
         [HttpGet]
+
+        [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult ShowPackage()
         {
             try
@@ -138,6 +143,8 @@ namespace CarWash.Areas.Api.Account.Controllers
                 string claimuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int userid = int.Parse(Id);
+                ShowPackageResponse showPackage = new ShowPackageResponse();
+                List<ListPackage> listPackageDb = new List<ListPackage>();
                 BaseResponse response = new BaseResponse();
                 var ChackRole = _context.User.Where(o => o.UserId == userid && o.Role == Role.Customer).FirstOrDefault();
                 if(ChackRole == null)
@@ -147,23 +154,36 @@ namespace CarWash.Areas.Api.Account.Controllers
                     return Json(response);
                 }
                 Car checkcar = _context.Car.Where(o => o.UserId == userid).FirstOrDefault();
-                if(checkcar== null)
+                if(checkcar == null)
                 {
-
+                    var packageall = _context.Package.Include(o => o.ModelPackage).ToList();
+                    foreach(Package package1 in packageall)
+                    {
+                        ListPackage listPackage = new ListPackage();
+                        listPackage.PackageId = package1.PackageId;
+                        listPackage.Packagename = package1.ModelPackage.PackageName;
+                        listPackage.SizeId = package1.SizeId;
+                        listPackage.Description = package1.Description;
+                        listPackage.Price = package1.Price.ToString();
+                        listPackageDb.Add(listPackage);
+                    }
+                    showPackage.Message = "สำเร็จ";
+                    showPackage.Success = true;
+                    showPackage.packageCar = listPackageDb;
+                    return Json(showPackage);
                 }
                 var modle = checkcar.Model_Id;
                 var modlesize = _context.CarModel.Where(o => o.Model_Id == modle).FirstOrDefault();
-                var package = _context.Package.Include(o => o.Size).Where(o => o.SizeId == modlesize.SizeId).ToList();
-                List<ListPackage> listPackageDb = new List<ListPackage>();
-                ShowPackageResponse showPackage = new ShowPackageResponse();
-            ///   ShowPackageCar packageCar = new ShowPackageCar();
+                var package = _context.Package.Include(o => o.ModelPackage).Include(o=>o.Size).Where(o => o.SizeId == modlesize.SizeId).ToList();
                 foreach(Package show in package)
                 {
+                    ShowPackageCar packageCar = new ShowPackageCar();
                     ListPackage listPackage = new ListPackage();
                     listPackage.PackageId = show.PackageId;
-                    listPackage.Packagename = show.PackageName;
+                    listPackage.Packagename = show.ModelPackage.PackageName;
                     listPackage.SizeId = show.SizeId;
                     listPackage.Description = show.Description;
+                    listPackage.Price = show.Price.ToString();
                     listPackageDb.Add(listPackage);
                 }
                 showPackage.Message = "สำเร็จ";
@@ -178,5 +198,59 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Ok();
 
         }
+        [HttpGet]
+        public IActionResult ShowPackageAll(int? model)
+        {
+            try
+            {
+                var check = _context.CarModel.Where(o => o.Model_Id == model).FirstOrDefault();
+                if(check==null)
+                {
+                    ShowPackageAllResponse showPackage = new ShowPackageAllResponse();
+                    List<ListPackageAll> listPackageDb = new List<ListPackageAll>();
+                    List<ListPackageAll> listPackageDbV1 = new List<ListPackageAll>();
+                    var packageall = _context.Package.Include(o => o.ModelPackage).Include(o => o.Size).Where(o => o.ModelPackageId == 1).ToList();
+                    foreach(Package package in packageall)
+                    {
+                        ListPackageAll listPackage = new ListPackageAll();
+                        listPackage.Packagename = package.ModelPackage.PackageName;
+                        listPackage.SizeName = package.Size.SizeName;
+                        listPackage.Price = package.Price.ToString();
+                        listPackageDbV1.Add(listPackage);
+                    }
+                    var packageall1 = _context.Package.Include(o => o.ModelPackage).Include(o => o.Size).Where(o => o.ModelPackageId == 2).ToList();
+                    foreach(Package package in packageall)
+                    {
+                        ListPackageAll listPackage = new ListPackageAll();
+                        listPackage.Packagename = package.ModelPackage.PackageName;
+                        listPackage.SizeName = package.Size.SizeName;
+                        listPackage.Price = package.Price.ToString();
+                        listPackageDb.Add(listPackage);
+                    }
+                    showPackage.Message = "สำเร็จ";
+                    showPackage.Success = true;
+                    showPackage.PackageCarV1 = listPackageDbV1;
+                    showPackage.packageCar = listPackageDb;
+                    return Json(showPackage);
+
+                }
+                else if(check!=null)
+                {
+                   var sizecar = check.SizeId;
+                    var package = _context.Package.Where(o => o.SizeId == sizecar).ToList(); 
+
+                }
+
+            }
+            catch(Exception)
+            {
+
+            }
+            return Ok();
+           
+        }
+
+
+
     }
 }

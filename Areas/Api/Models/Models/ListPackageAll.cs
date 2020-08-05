@@ -6,24 +6,21 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.Models
 {
-    public class ListPackage
+    public class ListPackageAll
     {
-        public int PackageId;
-        public int SizeId;
+
+        public string SizeName;
         public string Packagename;
-        public string Description;
         public string Price;
 
-        public ListPackage()
+        public ListPackageAll()
         {
         }
 
-        public ListPackage(Package package)
+        public ListPackageAll(Package package)
         {
-            this.PackageId = package.PackageId;
             this.Packagename = package.ModelPackage.PackageName;
-            this.Description = package.Description;
-            this.SizeId = package.SizeId;
+            this.SizeName = package.Size.SizeName;
             this.Price = package.Price.ToString();
         }
     }

@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-     
+   
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -28,6 +28,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<HomeScore> HomeScore { get; set; }
         public virtual DbSet<ImageSevice> ImageSevice { get; set; }
         public virtual DbSet<Job> Job { get; set; }
+        public virtual DbSet<ModelPackage> ModelPackage { get; set; }
         public virtual DbSet<OthrerImage> OthrerImage { get; set; }
         public virtual DbSet<Package> Package { get; set; }
         public virtual DbSet<Province> Province { get; set; }
@@ -36,7 +37,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-       
+ 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -264,6 +265,11 @@ namespace CarWash.Models.DBModels
                     .HasConstraintName("FK_Job_Package");
             });
 
+            modelBuilder.Entity<ModelPackage>(entity =>
+            {
+                entity.Property(e => e.PackageName).HasMaxLength(50);
+            });
+
             modelBuilder.Entity<OthrerImage>(entity =>
             {
                 entity.HasKey(e => e.ImageId);
@@ -284,15 +290,17 @@ namespace CarWash.Models.DBModels
 
                 entity.Property(e => e.PackageImage).HasMaxLength(200);
 
-                entity.Property(e => e.PackageName)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
                 entity.Property(e => e.Status)
                     .IsRequired()
                     .HasMaxLength(50);
 
                 entity.Property(e => e.UpdateTime).HasColumnType("datetime");
+
+                entity.HasOne(d => d.ModelPackage)
+                    .WithMany(p => p.Package)
+                    .HasForeignKey(d => d.ModelPackageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Package_ModelPackage");
 
                 entity.HasOne(d => d.Size)
                     .WithMany(p => p.Package)

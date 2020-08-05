@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace CarWash.Areas.Api.Models.ModelsResponse
 {
-    public class ShowPackageResponse  : BaseResponse
+    public class ShowPackageAllResponse :BaseResponse
     {
-        public List< ListPackage> packageCar { get; set; }
+        public List<ListPackageAll> PackageCarV1 { get; set; }
 
-       
+        public List<ListPackageAll> packageCar { get; set; }
+
     }
 }

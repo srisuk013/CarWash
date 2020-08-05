@@ -11,7 +11,7 @@ namespace CarWash.Models.DBModels
         }
 
         public int PackageId { get; set; }
-        public string PackageName { get; set; }
+        public int ModelPackageId { get; set; }
         public int SizeId { get; set; }
         public string Status { get; set; }
         public DateTime? CreatedTime { get; set; }
@@ -20,6 +20,7 @@ namespace CarWash.Models.DBModels
         public double Price { get; set; }
         public string PackageImage { get; set; }
 
+        public virtual ModelPackage ModelPackage { get; set; }
         public virtual CarSize Size { get; set; }
         public virtual ICollection<Job> Job { get; set; }
     }

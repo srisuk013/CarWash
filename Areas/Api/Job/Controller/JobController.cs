@@ -560,6 +560,13 @@ namespace CarWash.Areas.Api.Account.Controllers
            .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
             foreach(Job HistoryJob in JobDb)
             {
+                if(HistoryJob==null)
+                {
+                    BaseResponse response = new BaseResponse();
+                    response.Message = "ไม่พบข้อมูล";
+                    response.Success = false;
+                    return Json(response);
+                }
 
                 JobHistory job = new JobHistory(HistoryJob);
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
@@ -696,7 +703,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 jobrequset.Longitude = jobdb.Select(o => o.Longitude).FirstOrDefault();
                 string location = await ServiceCheck.LocationAsync(jobdb.Select(o => o.Longitude).FirstOrDefault(), jobdb.Select(o => o.Latitude).FirstOrDefault());
                 jobrequset.Location = location;
-                jobrequset.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
+                jobrequset.PackageName = jobdb.Select(o => o.Package.ModelPackage.PackageName).FirstOrDefault();
                 jobrequset.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
                 jobrequset.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault() + ".00 ฿";
                 jobrequset.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
@@ -904,7 +911,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                                 string showDistance = await ServiceCheck.DistanceAsync(lon, lat, req.Longitude, req.Latitude);
                                 jobname.Location = location;
                                 jobname.Distance = showDistance;
-                                jobname.PackageName = jobdb.Select(o => o.Package.PackageName).FirstOrDefault();
+                                jobname.PackageName = jobdb.Select(o => o.Package.ModelPackage.PackageName).FirstOrDefault();
                                 jobname.VehicleRegistration = jobdb.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
                                 jobname.Price = jobdb.Select(o => o.Price.ToString()).FirstOrDefault() + ".00 ฿";
                                 jobname.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");

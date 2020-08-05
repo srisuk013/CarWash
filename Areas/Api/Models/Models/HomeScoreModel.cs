@@ -10,8 +10,5 @@ namespace CarWash.Areas.Api.Models.Models
         public string Ratings { get; set; }
         public string Acceptance { get; set; }
         public string Cancellation { get; set; }
-
-     
-
     }
 }

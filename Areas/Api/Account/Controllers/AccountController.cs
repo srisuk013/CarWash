@@ -612,38 +612,36 @@ namespace CarWash.Areas.Account
                 var dateYear = homeScoreSum.Select(o => o.CreatedTime.Year).FirstOrDefault();
                 HomeScoreModel model = new HomeScoreModel();
                 HomeScoreResponse home = new HomeScoreResponse();
-                if(dateMonth == 0)
+                DateTime datenow = DateTime.Now;
+                if(dateMonth != DateTime.Now.Month)
                 {
-                    HomeScore newhomescore = new HomeScore();
-                    newhomescore.Acceptance = 0;
-                    newhomescore.Cancellation = 0;
-                    newhomescore.MaxJob = 0;
-                    newhomescore.Rating = 5.00;
-                    newhomescore.Timeout = 0;
-                    newhomescore.CreatedTime = DateTime.Now;
-                    _context.HomeScore.Update(newhomescore);
-                    _context.SaveChanges();
-                    home.Success = true;
-                    home.Message = "สำเร็จ";
-                    model.Ratings = "5.0";
-                    model.Acceptance = "0 %";
-                    model.Cancellation = "0 %";
-                    home.HomeScore = model;
-                    return Json(home);
-                }
-                else if(dateYear != year)
-                {
-                    homeScore.Timeout = 0;
-                    homeScore.Acceptance = 0;
-                    homeScore.Cancellation = 0;
-                    homeScore.MaxJob = 0;
-                    homeScore.Score = 0;
-                    homeScore.Rating = 5.00;
                     homeScore.CreatedTime = DateTime.Now;
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
-                    model.Acceptance = "0 %";
-                    model.Cancellation = "0 %";
+                    if(dateMonth == datenow.Month)
+                    {
+                        homeScore.CreatedTime = DateTime.Now;
+                        _context.HomeScore.Update(homeScore);
+                        _context.SaveChanges();
+                        home.Success = true;
+                        home.Message = "สำเร็จ";
+                        home.HomeScore = model;
+                        return Json(home);
+                    }
+                }
+                else if(dateYear != year)
+                {
+                    homeScore.Rating = 5.00;
+                    homeScore.MaxJob = 0;
+                    homeScore.Cancellation = 0;
+                    homeScore.Acceptance = 0;
+                    homeScore.Timeout = 0;
+                    homeScore.Score = 0;
+                    homeScore.CreatedTime = DateTime.Now;
+                    _context.HomeScore.Update(homeScore);
+                    _context.SaveChanges();
+                    model.Acceptance = "0%";
+                    model.Cancellation = "0%";
                     model.Ratings = "5.0";
                     home.Success = true;
                     home.Message = "สำเร็จ";
@@ -674,11 +672,14 @@ namespace CarWash.Areas.Account
                         case 1:
                             home.SwitchFlag = State.On;
                             break;
-
                     }
                     double? ratings = ((ScoreSum / jobSum));
                     string showratings = String.Format("{0:0}", ratings);
                     model.Ratings = showratings + ".00";
+                    if(jobMaxSum==0)
+                    {
+                        jobMaxSum = 1;
+                    }
                     double? Acceptances = ((AcceptanceSum / jobMaxSum) * 100);
                     string showAccptances = String.Format("{0:0.00}%", Acceptances);
                     model.Acceptance = showAccptances;

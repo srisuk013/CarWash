@@ -33,7 +33,7 @@ namespace CarWash.Areas.Api.Models
             this.JobId = job.JobId;
             this.ImageProfile = job.Customer.Image;
             this.FullName = job.Customer.FullName;
-            this.PackageName = job.Package.PackageName;
+           this.PackageName = job.Package.ModelPackage.PackageName;
             this.VehicleRegistration = job.Car.VehicleRegistration;
             //this.Province = job.Car.Province.ProvinceName;
             this.Price = "฿ " + job.Package.Price + ".00";
