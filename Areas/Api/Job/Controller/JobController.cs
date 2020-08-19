@@ -23,7 +23,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using CarWash.Areas.Api.Models.ModelsResponse;
+
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -500,8 +500,8 @@ namespace CarWash.Areas.Api.Account.Controllers
             {
                 string date = DateTime.Now.ToString("ddMMyyyyHHmm");
                 int month = Convert.ToInt32(date.Substring(2, 2));
-                var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-               .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Month == month).ToList();
+                var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o=>o.Package.ModelPackage).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
+               .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Month == month).Where(o=>o.Report==null).ToList();
                 List<JobHistory> jobDb = new List<JobHistory>();
                 foreach(Job HistoryJob in JobDbmonth)
                 {
@@ -556,7 +556,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             List<JobHistory> jobdb = new List<JobHistory>();
             DateTime datebegin = ServiceCheck.DateTime(DateBegin.Value);
             DateTime dateEnd = ServiceCheck.DateTime(DateEnd.Value);
-            var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
+            var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o=>o.Package.ModelPackage)
            .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
             foreach(Job HistoryJob in JobDb)
             {

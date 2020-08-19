@@ -418,6 +418,7 @@ namespace CarWash.Areas.Account
             }
             try
             {
+               
                 string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int idName = int.Parse(Id);
@@ -426,7 +427,13 @@ namespace CarWash.Areas.Account
                 _context.User.Update(user);
                 _context.SaveChanges();
                 Models.DBModels.User userV1 = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
-                UserInfoV1 userInfo = new UserInfoV1(userV1);
+                UserInfoV1 userInfo = new UserInfoV1();
+                userInfo.UserId = userV1.UserId;
+                userInfo.FullName = userV1.FullName;
+                userInfo.IdCardNumber = userV1.IdCardNumber;
+                userInfo.Phone = userV1.Phone;
+                userInfo.Image = userV1.Image;
+                userInfo.FullName = userV1.FullName;
                 response.UserInfo = userInfo;
                 response.Success = true;
                 response.Message = "เปลี่ยนเบอร์แล้ว";
@@ -830,8 +837,7 @@ namespace CarWash.Areas.Account
             return BadRequest();
         }
 
-
-        public string Token(string user, string id, string code, int day)
+        private string Token(string user, string id, string code, int day)
         {
             DateTime dateToken = DateTime.UtcNow.AddDays(day);
             long unixTime1 = ((DateTimeOffset)dateToken).ToUnixTimeSeconds();
@@ -849,6 +855,93 @@ namespace CarWash.Areas.Account
             var AccessToken = Service.Issue(payloadBody);
 
             return AccessToken;
+        }
+        [HttpPost]
+        public async Task<IActionResult> LoginV1([FromBody] ReqLogin login)
+        {
+            SignInResponse signInResponse = new SignInResponse();
+            signInResponse.Success = false;
+            try
+            {
+                if(String.IsNullOrEmpty(login.Username))
+                {
+                    signInResponse.Message = "กรุณากรอกUser";
+                    return Json(signInResponse);
+                }
+                else if(login.Username.Length < 4)
+                {
+                    signInResponse.Message = "กรุณากรอกชื่อผู้ใช้งานมากกว่า 4 ตัวอักษร";
+                    return Json(signInResponse);
+                }
+                else if(ServiceCheck.CheckPassWord(login.Password) == false)
+                {
+                    signInResponse.Message = "กรุณาตรวจสอบPassword";
+                    return Json(signInResponse);
+                }
+                else if(ServiceCheck.CheckRole(login.Role) == false)
+                {
+                    signInResponse.Message = "กรุณาตรวจสอบRoleให้ถูกต้อง";
+                    return Json(signInResponse);
+                }
+                IdentityUser aspnetUserCheck = await _userManager.FindByNameAsync(login.Username);
+                Models.DBModels.User user = _context.User.Where(o => o.Username == login.Username && o.Role == login.Role).FirstOrDefault();
+                if(user == null)
+                {
+                    signInResponse.Message = "กรุณาตรวจสอบUserNameและPassword";
+                    return Json(signInResponse);
+                }
+                else if(aspnetUserCheck == null)
+                {
+                    signInResponse.Message = "UserNameไม่ถูกต้อง";
+                    return Json(signInResponse);
+                }
+                Models.DBModels.User StatusCheckInActive = _context.User.Where(o => o.Username == login.Username && o.Status == Status.InActive).FirstOrDefault();
+                Models.DBModels.User StatusCheckPendingApproval = _context.User.Where(o => o.Username == login.Username && o.Status == Status.PendingApproval).FirstOrDefault();
+                if(StatusCheckInActive != null)
+                {
+                    signInResponse.Message = "User ของคุณอยู่ในสถานะ InActive ";
+                    return Json(signInResponse);
+                }
+                else if(StatusCheckPendingApproval != null)
+                {
+                    signInResponse.Message = "User ของคุณอยู่ในสถานะ PendingApproval ";
+                    return Json(signInResponse);
+                }
+                Microsoft.AspNetCore.Identity.SignInResult signInResult = await _signInManager.PasswordSignInAsync(aspnetUserCheck, login.Password, false, false);
+                if(signInResult.Succeeded)
+                {
+                    var idname = user.UserId;
+                    Models.DBModels.User userId = _context.User.Where(o => o.UserId == idname).FirstOrDefault();
+                    signInResponse.Success = true;
+                    signInResponse.Message = "เข้าสู่ระบบสำเร็จ";
+                    var codeId = userId.Code;
+                    Api.Models.Models.Token token = new Api.Models.Models.Token();
+                    token.AccessToken = Token(login.Username, user.UserId.ToString(), codeId, 7);
+                    token.RefreshToken = Token(login.Username, user.UserId.ToString(), codeId, 8);
+                    signInResponse.Token = token;
+                    return Json(signInResponse);
+                }
+                if(signInResult.IsLockedOut)
+                {
+                    signInResponse.Message = ("บัญชีผู้ใช้ถูกล็อค");
+                    return Json(signInResponse);
+                }
+                else if(signInResult.IsNotAllowed)
+                {
+                    return BadRequest();
+                }
+                else
+                {
+                    signInResponse.Message = "กรุณาตรวจสอบUserและpassword";
+                    return Json(signInResponse);
+                }
+            }
+            catch(Exception)
+            {
+                signInResponse.Message = "กรุณาตรวจสอบUserและpassword";
+                signInResponse.Success = false;
+                return Json(signInResponse);
+            }
         }
 
     }

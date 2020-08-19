@@ -33,13 +33,13 @@ namespace CarWash.Areas.Api.Models
             this.JobId = job.JobId;
             this.ImageProfile = job.Customer.Image;
             this.FullName = job.Customer.FullName;
-           this.PackageName = job.Package.ModelPackage.PackageName;
+            this.PackageName = job.Package.ModelPackage.PackageName;
             this.VehicleRegistration = job.Car.VehicleRegistration;
             //this.Province = job.Car.Province.ProvinceName;
             this.Price = "฿ " + job.Package.Price + ".00";
             this.JobDateTime = dateStr;
             this.ImagesBeforeService = new List<ImageSevices>();
-            this.Comment = job.Report;
+            this.Comment = job.Comment;
             this.Location = job.Location;
             this.ImagesAfterService = new List<AfterImage>();
             this.OtherImagesService = new List<OtherImage>();

@@ -174,7 +174,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 }
                 var modle = checkcar.Model_Id;
                 var modlesize = _context.CarModel.Where(o => o.Model_Id == modle).FirstOrDefault();
-                var package = _context.Package.Include(o => o.ModelPackage).Include(o=>o.Size).Where(o => o.SizeId == modlesize.SizeId).ToList();
+                var package = _context.Package.Include(o => o.ModelPackage).Include(o => o.Size).Where(o => o.SizeId == modlesize.SizeId).ToList();
                 foreach(Package show in package)
                 {
                     ShowPackageCar packageCar = new ShowPackageCar();
@@ -204,7 +204,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             try
             {
                 var check = _context.CarModel.Where(o => o.Model_Id == model).FirstOrDefault();
-                if(check==null)
+                if(check == null)
                 {
                     ShowPackageAllResponse showPackage = new ShowPackageAllResponse();
                     List<ListPackageAll> listPackageDb = new List<ListPackageAll>();
@@ -232,13 +232,11 @@ namespace CarWash.Areas.Api.Account.Controllers
                     showPackage.PackageCarV1 = listPackageDbV1;
                     showPackage.packageCar = listPackageDb;
                     return Json(showPackage);
-
                 }
-                else if(check!=null)
+                else if(check != null)
                 {
-                   var sizecar = check.SizeId;
-                    var package = _context.Package.Where(o => o.SizeId == sizecar).ToList(); 
-
+                    var sizecar = check.SizeId;
+                    var package = _context.Package.Where(o => o.SizeId == sizecar).ToList();
                 }
 
             }
@@ -247,10 +245,34 @@ namespace CarWash.Areas.Api.Account.Controllers
 
             }
             return Ok();
-           
         }
 
+        [HttpGet]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult ChooseCar()
+        {
+            string claimuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userid = int.Parse(Id);
+            var mycar = _context.Car.Include(o => o.Brand).Include(o => o.Model_).Where(o => o.UserId == userid).ToList();
+            ChooseCarResponse response = new ChooseCarResponse();
+            List<ChooseMyCar> chooseMyCars = new List<ChooseMyCar>();
+            foreach(Car car in mycar )
+            {
+                ChooseMyCar cars = new ChooseMyCar();                                                                 
+                cars.CarId = car.CarId;
+                cars.Brand = car.Brand.BrandName;
+                cars.VehicleRegistration = car.VehicleRegistration;
+                chooseMyCars.Add(cars);
+            }
+            response.Success = true;
+            response.Message = "สำเร็จ";
+            response.MyCar = chooseMyCars;
 
+            return Json(response);
+        }
+
+      
 
     }
 }
