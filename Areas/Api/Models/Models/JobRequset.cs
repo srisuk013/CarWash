@@ -17,7 +17,7 @@ namespace CarWash.Areas.Api.Models
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public string VehicleRegistration { get; set; }
-        public string Price { get; set; }
+        public string TotalPrice { get; set; }
         public string DateTime { get; set; }
         public string Distance { get; set; }
         public string Location { get; set; }

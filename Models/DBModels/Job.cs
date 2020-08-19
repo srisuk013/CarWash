@@ -22,7 +22,7 @@ namespace CarWash.Models.DBModels
         public string StatusName { get; set; }
         public string JobApprove { get; set; }
         public string Report { get; set; }
-        public int Price { get; set; }
+        public int TotalPrice { get; set; }
         public string Comment { get; set; }
         public string Location { get; set; }
         public int? StatusId { get; set; }
