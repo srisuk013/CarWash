@@ -400,7 +400,7 @@ namespace CarWash.Areas.Account
                 response.Message = "กรุณาใส่เบอร์";
                 return Json(response);
             }
-            if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
+          else if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
             {
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
@@ -419,21 +419,21 @@ namespace CarWash.Areas.Account
             try
             {
                
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                int userid = int.Parse(Id);
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
                 user.Phone = reqChangePhone.Phone;
                 _context.User.Update(user);
                 _context.SaveChanges();
-                Models.DBModels.User userV1 = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                Models.DBModels.User uaerdb = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
                 UserInfoV1 userInfo = new UserInfoV1();
-                userInfo.UserId = userV1.UserId;
-                userInfo.FullName = userV1.FullName;
-                userInfo.IdCardNumber = userV1.IdCardNumber;
-                userInfo.Phone = userV1.Phone;
-                userInfo.Image = userV1.Image;
-                userInfo.FullName = userV1.FullName;
+                userInfo.UserId = uaerdb.UserId;
+                userInfo.FullName = uaerdb.FullName;
+                userInfo.IdCardNumber = uaerdb.IdCardNumber;
+                userInfo.Phone = uaerdb.Phone;
+                userInfo.Image = uaerdb.Image;
+                userInfo.FullName = uaerdb.FullName;
                 response.UserInfo = userInfo;
                 response.Success = true;
                 response.Message = "เปลี่ยนเบอร์แล้ว";
@@ -458,13 +458,13 @@ namespace CarWash.Areas.Account
             }
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
+                int userid = int.Parse(Id);
                 UserLogs user = new UserLogs();
                 if(req.LogsStatus == 1)
                 {
-                    user.UserId = idName;
+                    user.UserId = userid;
                     user.DatetimeActiveIn = DateTime.Now;
                     _context.UserLogs.Add(user);
                 }
@@ -557,7 +557,7 @@ namespace CarWash.Areas.Account
             {
                 response.Phone = req.Phone;
                 response.Success = true;
-                response.Message = "สำเร็จ";
+                response.Message = "เบอร์นี้ใช้งานได้";
                 return Json(response);
             }
 

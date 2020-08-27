@@ -1,12 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
 using repos.Data;
 using Microsoft.Extensions.Configuration;
@@ -38,8 +33,6 @@ namespace CarWash
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-      
             AppSettings.Secret = Configuration.GetSection("JWTKey").Value;
             services.AddDbContextPool<CarWashContext>(options =>
 options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User ID=srisuk013; Password=Srisuk1234"));
@@ -98,8 +91,6 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                 options.User.RequireUniqueEmail = false;
             });
 
-
-
             services.AddMvc();
 
             services.ConfigureApplicationCookie(options =>
@@ -120,9 +111,6 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
             services.AddScoped<ServiceCheck>();
             services.AddScoped<CarWashAuthorization>();
             services.AddSignalR();
-
-
-
         }
 
 
@@ -149,8 +137,7 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
 
             app.UseStaticFiles();
             app.UseWebSockets();
-  
-            
+
             app.UseEndpoints(endpoints =>
             {
                 Api_RouteConfig.Config(endpoints);
@@ -158,22 +145,16 @@ options.UseSqlServer("Server=srisuk.database.windows.net; Database=CarWash; User
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
-               
-
-
             });
             app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
-          
-
             app.UseSignalR(routes => {
-                routes.MapHub<MoveViewHub>("/movehub");
-                routes.MapHub<ChatHub>("/chatHub");
+             /*   routes.MapHub<MoveViewHub>("/movehub");
+                routes.MapHub<ChatHub>("/chatHub");*/
                 routes.MapHub<CarWashEmployeeHup>("/CarWash/SignalR/EmployeeHub");
                 routes.MapHub<CarWashCustomerHub>("/CarWash/SignalR/CustomerHub");
                 routes.MapHub<TimeHub>("/CarWash/SignalR/TimeHub");
             });
-
 
         }
     }

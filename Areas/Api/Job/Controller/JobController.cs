@@ -232,8 +232,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                 {
                     ImageSevice image = new ImageSevice();
                     image.JobId = job.JobId;
-                    _context.ImageSevice.Add(image);
                     imageid = image.ImageId;
+                    _context.ImageSevice.Add(image);
+                    _context.SaveChanges();
                 }
                 else
                 {
@@ -353,6 +354,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                                 .PutAsync(stream, cancellation.Token);
                             var ImageUrl = await upload;
                             ImageSevice sevicedb = _context.ImageSevice.Where(o => o.ImageId == image.ImageId).FirstOrDefault();
+
                             if(image.StatusService >= 1 && image.StatusService <= 8)
                             {
                                 if(image.StatusService == 1)
@@ -943,7 +945,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int userId = int.Parse(Id);
-            JobRequestResponse jobRequest = new JobRequestResponse();
+            JobRequestResponse reqresponse = new JobRequestResponse();
             Job job = _context.Job.Where(o => o.JobId == jobid && o.EmployeeId== userId).FirstOrDefault();
             if(job == null)
             {
@@ -952,28 +954,25 @@ namespace CarWash.Areas.Api.Account.Controllers
                 response.Message = "ไม่พบข้อมูลในระบบ";
                 return Json(response);
             }
-            var jobdbV1 = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.EmployeeId == userId && o.JobId == jobid);
-            
-          
-           
+            var jobdbupdate = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.EmployeeId == userId && o.JobId == jobid);
             JobRequset jobrequset = new JobRequset();
             jobrequset.EmployeeId = userId;
-            jobrequset.JobId = jobdbV1.Select(o => o.JobId).FirstOrDefault();
-            jobrequset.FullName = jobdbV1.Select(o => o.Customer.FullName).FirstOrDefault();
-            jobrequset.Phone = jobdbV1.Select(o => o.Customer.Phone).FirstOrDefault();
-            jobrequset.ImageProfile = jobdbV1.Select(o => o.Customer.Image).FirstOrDefault();
-            jobrequset.Latitude = jobdbV1.Select(o => o.Latitude).FirstOrDefault();
-            jobrequset.Longitude = jobdbV1.Select(o => o.Longitude).FirstOrDefault();
-            string location = await ServiceCheck.LocationAsync(jobdbV1.Select(o => o.Longitude).FirstOrDefault(), jobdbV1.Select(o => o.Latitude).FirstOrDefault());
+            jobrequset.JobId = jobdbupdate.Select(o => o.JobId).FirstOrDefault();
+            jobrequset.FullName = jobdbupdate.Select(o => o.Customer.FullName).FirstOrDefault();
+            jobrequset.Phone = jobdbupdate.Select(o => o.Customer.Phone).FirstOrDefault();
+            jobrequset.ImageProfile = jobdbupdate.Select(o => o.Customer.Image).FirstOrDefault();
+            jobrequset.Latitude = jobdbupdate.Select(o => o.Latitude).FirstOrDefault();
+            jobrequset.Longitude = jobdbupdate.Select(o => o.Longitude).FirstOrDefault();
+            string location = await ServiceCheck.LocationAsync(jobdbupdate.Select(o => o.Longitude).FirstOrDefault(), jobdbupdate.Select(o => o.Latitude).FirstOrDefault());
             jobrequset.Location = location;
-            jobrequset.PackageName = jobdbV1.Select(o => o.Package.ModelPackage.PackageName).FirstOrDefault();
-            jobrequset.VehicleRegistration = jobdbV1.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
-            jobrequset.TotalPrice = jobdbV1.Select(o => o.TotalPrice.ToString()).FirstOrDefault() + ".00 ฿";
+            jobrequset.PackageName = jobdbupdate.Select(o => o.Package.ModelPackage.PackageName).FirstOrDefault();
+            jobrequset.VehicleRegistration = jobdbupdate.Select(o => o.Car.VehicleRegistration).FirstOrDefault();
+            jobrequset.TotalPrice = jobdbupdate.Select(o => o.TotalPrice.ToString()).FirstOrDefault() + ".00 ฿";
             jobrequset.DateTime = DateTime.Now.ToString("MM/dd/yyyy HH:mm");
-            jobRequest.Success = true;
-            jobRequest.Message = "สำเร็จ";
-            jobRequest.Job = jobrequset;
-            return Json(jobRequest);
+            reqresponse.Success = true;
+            reqresponse.Message = "สำเร็จ";
+            reqresponse.Job = jobrequset;
+            return Json(reqresponse);
         }
 
     }

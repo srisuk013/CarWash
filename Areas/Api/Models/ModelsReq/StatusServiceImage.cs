@@ -9,8 +9,9 @@ namespace CarWash.Areas.Api.Models.ModelsReq
     public class StatusServiceImage
     {
         public int StatusService { get; set; }
+        public int ImageId { get; set; }                  
         public IFormFile File { get; set; }
 
-        public int ImageId { get; set; }
+
     }
 }
