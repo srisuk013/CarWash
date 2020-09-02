@@ -7,7 +7,7 @@ namespace CarWash.Models.DBModels
     {
         public Job()
         {
-            ImageSevice = new HashSet<ImageSevice>();
+            ImageService = new HashSet<ImageService>();
             OthrerImage = new HashSet<OthrerImage>();
         }
 
@@ -31,7 +31,7 @@ namespace CarWash.Models.DBModels
         public virtual User Customer { get; set; }
         public virtual User Employee { get; set; }
         public virtual Package Package { get; set; }
-        public virtual ICollection<ImageSevice> ImageSevice { get; set; }
+        public virtual ICollection<ImageService> ImageService { get; set; }
         public virtual ICollection<OthrerImage> OthrerImage { get; set; }
     }
 }

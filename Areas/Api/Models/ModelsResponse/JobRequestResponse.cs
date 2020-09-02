@@ -14,6 +14,5 @@ namespace CarWash.Areas.Api.Models
 
         public JobRequset Job { get; set; }
 
-       // public LocationReponse location { get; set; }
     }
 }

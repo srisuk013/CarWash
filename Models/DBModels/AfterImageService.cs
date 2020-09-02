@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CarWash.Models.DBModels
 {
-    public partial class AfterImageSevice
+    public partial class AfterImageService
     {
         public int ImageId { get; set; }
         public string Image { get; set; }

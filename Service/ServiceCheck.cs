@@ -197,9 +197,9 @@ namespace CarWash.Service
             {
                 folderNameImage = UpImage.Desc.BackBefore;
             }
-            else if(Id == UpImage.LaftBefore)
+            else if(Id == UpImage.LeftBefore)
             {
-                folderNameImage = UpImage.Desc.LaftBefore;
+                folderNameImage = UpImage.Desc.LeftBefore;
             }
             else if(Id == UpImage.RightBefore)
             {
@@ -213,9 +213,9 @@ namespace CarWash.Service
             {
                 folderNameImage = UpImage.Desc.BackAfter;
             }
-            else if(Id == UpImage.LaftAfter)
+            else if(Id == UpImage.LeftAfter)
             {
-                folderNameImage = UpImage.Desc.LaftAfter;
+                folderNameImage = UpImage.Desc.LeftAfter;
             }
             else if(Id == UpImage.RightAfter)
             {

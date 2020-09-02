@@ -18,7 +18,7 @@ namespace CarWash.Areas.Api.Models
         public string Comment;
         public string Location;
         public List<OtherImage> OtherImagesService;
-        public List<ImageSevices> ImagesBeforeService;
+        public List<ImageServicesModel> ImagesBeforeService;
         public List<AfterImage> ImagesAfterService;
 
         public JobHistory()
@@ -38,7 +38,7 @@ namespace CarWash.Areas.Api.Models
             //this.Province = job.Car.Province.ProvinceName;
             this.Price = "฿ " + job.Package.Price + ".00";
             this.JobDateTime = dateStr;
-            this.ImagesBeforeService = new List<ImageSevices>();
+            this.ImagesBeforeService = new List<ImageServicesModel>();
             this.Comment = job.Comment;
             this.Location = job.Location;
             this.ImagesAfterService = new List<AfterImage>();

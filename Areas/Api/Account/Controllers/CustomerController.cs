@@ -22,7 +22,7 @@ namespace CarWash.Areas.Api.Account.Controllers
     public class CustomerController : Controller
     {
 
-        private CarWashContext _context;
+        private readonly CarWashContext _context;
 
         public CustomerController(CarWashContext context)
         {
@@ -271,8 +271,128 @@ namespace CarWash.Areas.Api.Account.Controllers
 
             return Json(response);
         }
+        [HttpGet]
+        public IActionResult History(long? DateBegin, long? DateEnd)
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int idName = int.Parse(Id);
+            HistoryResponse historyResponse = new HistoryResponse();
+            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            if(DateBegin == 0 && DateEnd == 0)
+            {
+                string date = DateTime.Now.ToString("ddMMyyyyHHmm");
+                int month = Convert.ToInt32(date.Substring(2, 2));
+                var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Package.ModelPackage).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
+               .Where(o => o.EmployeeId == idName && o.JobDateTime.Month == month && o.Report == null).ToList();
+                List<JobHistory> jobDb = new List<JobHistory>();
+                foreach(Job HistoryJob in JobDbmonth)
+                {
+                    JobHistory job = new JobHistory(HistoryJob);
+                    List<ImageService> imageSevices = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                    foreach(ImageService sevice in imageSevices)
+                    {
+                        ImageServicesModel imageFrontBefore = new ImageServicesModel();
+                        imageFrontBefore.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                        job.ImagesBeforeService.Add(imageFrontBefore);
+                        ImageServicesModel imageBackBefore = new ImageServicesModel();
+                        imageBackBefore.Image = imageSevices.Select(o => o.BackBefore).FirstOrDefault();
+                        job.ImagesBeforeService.Add(imageBackBefore);
+                        ImageServicesModel imageLaftBefore = new ImageServicesModel();
+                        imageLaftBefore.Image = imageSevices.Select(o => o.LeftBefore).FirstOrDefault();
+                        job.ImagesBeforeService.Add(imageLaftBefore);
+                        ImageServicesModel imageRightBefore = new ImageServicesModel();
+                        imageRightBefore.Image = imageSevices.Select(o => o.RightBefore).FirstOrDefault();
+                        job.ImagesBeforeService.Add(imageRightBefore);
+                    }
+                    foreach(ImageService sevice in imageSevices)
+                    {
+                        AfterImage imageFrontAfter = new AfterImage();
+                        imageFrontAfter.Image = sevice.FrontAfter;// imageSevices.Select(o => o.FrontAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(imageFrontAfter);
+                        AfterImage imageBackAfter = new AfterImage();
+                        imageBackAfter.Image = imageSevices.Select(o => o.BackAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(imageBackAfter);
+                        AfterImage imageLaftAfter = new AfterImage();
+                        imageLaftAfter.Image = imageSevices.Select(o => o.LeftAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(imageLaftAfter);
+                        AfterImage imageRightAfter = new AfterImage();
+                        imageRightAfter.Image = imageSevices.Select(o => o.RightAfter).FirstOrDefault();
+                        job.ImagesAfterService.Add(imageRightAfter);
+                    }
+                    List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                    foreach(OthrerImage image in Jobimage)
+                    {
+                        OtherImage otherImage = new OtherImage(image);
+                        job.OtherImagesService.Add(otherImage);
+                    }
 
-      
+                    jobDb.Add(job);
+                }
+                historyResponse.Success = true;
+                historyResponse.Message = "สำเร็จ";
+                historyResponse.Histories = jobDb;
+                return Json(historyResponse);
+            }
+            List<JobHistory> jobdb = new List<JobHistory>();
+            DateTime datebegin = ServiceCheck.DateTime(DateBegin.Value);
+            DateTime dateEnd = ServiceCheck.DateTime(DateEnd.Value);
+            var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o => o.Package.ModelPackage)
+           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
+            foreach(Job HistoryJob in JobDb)
+            {
+                if(HistoryJob == null)
+                {
+                    BaseResponse response = new BaseResponse();
+                    response.Message = "ไม่พบข้อมูล";
+                    response.Success = false;
+                    return Json(response);
+                }
+                JobHistory job = new JobHistory(HistoryJob);
+                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                List<ImageService> imageSevices = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
+                foreach(ImageService sevice in imageSevices)
+                {
+                    ImageServicesModel imageFrontBefore = new ImageServicesModel();
+                    imageFrontBefore.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                    job.ImagesBeforeService.Add(imageFrontBefore);
+                    ImageServicesModel imageBackBefore = new ImageServicesModel();
+                    imageBackBefore.Image = imageSevices.Select(o => o.BackBefore).FirstOrDefault();
+                    job.ImagesBeforeService.Add(imageBackBefore);
+                    ImageServicesModel imageLaftBefore = new ImageServicesModel();
+                    imageLaftBefore.Image = imageSevices.Select(o => o.LeftBefore).FirstOrDefault();
+                    job.ImagesBeforeService.Add(imageLaftBefore);
+                    ImageServicesModel imageRightBefore = new ImageServicesModel();
+                    imageRightBefore.Image = imageSevices.Select(o => o.RightBefore).FirstOrDefault();
+                    job.ImagesBeforeService.Add(imageRightBefore);
+                }
+                foreach(ImageService sevice in imageSevices)
+                {
+                    AfterImage imageFrontAfter = new AfterImage();
+                    imageFrontAfter.Image = imageSevices.Select(o => o.FrontAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(imageFrontAfter);
+                    AfterImage imageBackAfter = new AfterImage();
+                    imageBackAfter.Image = imageSevices.Select(o => o.BackAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(imageBackAfter);
+                    AfterImage imageLaftAfter = new AfterImage();
+                    imageLaftAfter.Image = imageSevices.Select(o => o.LeftAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(imageLaftAfter);
+                    AfterImage imageRightAfter = new AfterImage();
+                    imageRightAfter.Image = imageSevices.Select(o => o.RightAfter).FirstOrDefault();
+                    job.ImagesAfterService.Add(imageRightAfter);
+                }
+                foreach(OthrerImage image in Jobimage)
+                {
+                    OtherImage otherImage = new OtherImage(image);
+                    job.OtherImagesService.Add(otherImage);
+                }
+                jobdb.Add(job);
+            }
+            historyResponse.Success = true;
+            historyResponse.Message = "สำเร็จ";
+            historyResponse.Histories = jobdb;
+            return Json(historyResponse);
+        }
 
     }
 }

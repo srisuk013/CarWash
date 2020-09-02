@@ -6,7 +6,7 @@ namespace CarWash.Models.DBModels
 {
     public partial class CarWashContext : DbContext
     {
-       
+      
 
         public CarWashContext(DbContextOptions<CarWashContext> options)
             : base(options)
@@ -26,7 +26,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<CarSize> CarSize { get; set; }
         public virtual DbSet<Chat> Chat { get; set; }
         public virtual DbSet<HomeScore> HomeScore { get; set; }
-        public virtual DbSet<ImageSevice> ImageSevice { get; set; }
+        public virtual DbSet<ImageService> ImageService { get; set; }
         public virtual DbSet<Job> Job { get; set; }
         public virtual DbSet<ModelPackage> ModelPackage { get; set; }
         public virtual DbSet<OthrerImage> OthrerImage { get; set; }
@@ -37,7 +37,7 @@ namespace CarWash.Models.DBModels
         public virtual DbSet<Wallet> Wallet { get; set; }
         public virtual DbSet<WalletLogs> WalletLogs { get; set; }
 
-        
+      
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -203,30 +203,30 @@ namespace CarWash.Models.DBModels
                     .HasConstraintName("FK_HomeScore_User");
             });
 
-            modelBuilder.Entity<ImageSevice>(entity =>
+            modelBuilder.Entity<ImageService>(entity =>
             {
                 entity.HasKey(e => e.ImageId);
 
-                entity.Property(e => e.BackAfter).HasMaxLength(500);
+                entity.Property(e => e.BackAfter).HasMaxLength(1000);
 
-                entity.Property(e => e.BackBefore).HasMaxLength(500);
+                entity.Property(e => e.BackBefore).HasMaxLength(1000);
 
-                entity.Property(e => e.FrontAfter).HasMaxLength(500);
+                entity.Property(e => e.FrontAfter).HasMaxLength(1000);
 
-                entity.Property(e => e.FrontBefore).HasMaxLength(500);
+                entity.Property(e => e.FrontBefore).HasMaxLength(1000);
 
-                entity.Property(e => e.LaftAfter).HasMaxLength(500);
+                entity.Property(e => e.LeftAfter).HasMaxLength(1000);
 
-                entity.Property(e => e.LaftBefore).HasMaxLength(500);
+                entity.Property(e => e.LeftBefore).HasMaxLength(1000);
 
-                entity.Property(e => e.RightAfter).HasMaxLength(500);
+                entity.Property(e => e.RightAfter).HasMaxLength(1000);
 
-                entity.Property(e => e.RightBefore).HasMaxLength(500);
+                entity.Property(e => e.RightBefore).HasMaxLength(1000);
 
                 entity.HasOne(d => d.Job)
-                    .WithMany(p => p.ImageSevice)
+                    .WithMany(p => p.ImageService)
                     .HasForeignKey(d => d.JobId)
-                    .HasConstraintName("FK_ImageSevice_Job");
+                    .HasConstraintName("FK_ImageService_Job");
             });
 
             modelBuilder.Entity<Job>(entity =>
