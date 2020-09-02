@@ -24,17 +24,12 @@ using System.IO;
 using System.Security.Claims;
 using System.Threading;
 
-
-
-
 namespace CarWash.Areas.Api.Account.Controllers
 {
-
     [Area("Api")]
     [Route("Api/Job/[Action]")]
     [Obsolete]
     [ServiceFilter(typeof(CarWashAuthorization))]
-
     public class JobController : CarWashController
     {
         private CarWashContext _context;
@@ -111,18 +106,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                         break;
                 }
                 ImageServiceResponse responses = new ImageServiceResponse();
-
                 var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId);
                 ImageService serviceDb = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == imageSevice.JobId).FirstOrDefault();
                 ServiceImage service = new ServiceImage(serviceDb);
-                /* service.FrontBefore = serviceDb.Select(o => o.FrontBefore).FirstOrDefault();
-                 service.BackBefore = serviceDb.Select(o => o.BackBefore).FirstOrDefault();
-                 service.LeftBefore = serviceDb.Select(o => o.LaftBefore).FirstOrDefault();
-                 service.RightBefore = serviceDb.Select(o => o.RightBefore).FirstOrDefault();
-                 service.FrontAfter = serviceDb.Select(o => o.FrontAfter).FirstOrDefault();
-                 service.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
-                 service.LeftAfter = serviceDb.Select(o => o.LaftAfter).FirstOrDefault();
-                 service.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();*/
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == jobDb.JobId).ToList();
                 foreach(OthrerImage image in Jobimage)
                 {
@@ -162,17 +148,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                 _context.Remove(_context.OthrerImage.Single(a => a.ImageId == req.ImageId));
                 _context.SaveChanges();
                 ImageServiceResponse responses = new ImageServiceResponse();
-                ServiceImage service = new ServiceImage();
                 ImageService imageSevice = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == userEmp.JobId).FirstOrDefault();
-                var serviceDb = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == imageSevice.JobId);
-                service.FrontBefore = serviceDb.Select(o => o.FrontBefore).FirstOrDefault();
-                service.BackBefore = serviceDb.Select(o => o.BackBefore).FirstOrDefault();
-                service.LeftBefore = serviceDb.Select(o => o.LeftBefore).FirstOrDefault();
-                service.RightBefore = serviceDb.Select(o => o.RightBefore).FirstOrDefault();
-                service.FrontAfter = serviceDb.Select(o => o.FrontAfter).FirstOrDefault();
-                service.BackAfter = serviceDb.Select(o => o.BackAfter).FirstOrDefault();
-                service.LeftAfter = serviceDb.Select(o => o.LeftAfter).FirstOrDefault();
-                service.RightAfter = serviceDb.Select(o => o.RightAfter).FirstOrDefault();
+                var serviceDb = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == imageSevice.JobId).FirstOrDefault();
+                ServiceImage service = new ServiceImage(serviceDb);
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == userEmp.JobId).ToList();
                 foreach(OthrerImage image in Jobimage)
                 {
@@ -198,17 +176,9 @@ namespace CarWash.Areas.Api.Account.Controllers
         {
             try
             {
-                Chat chat0 = new Chat();
-                chat0.Message = "start function";
-                _context.Chat.Add(chat0);
-                _context.SaveChanges();
                 ImageServiceResponse response = new ImageServiceResponse();
                 string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                Chat chat = new Chat();
-                chat.Message = Id;
-                _context.Chat.Add(chat);
-                _context.SaveChanges();
                 int userId = int.Parse(Id);
                 Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
                 ImageService updateimage = _context.ImageService.Where(o => o.JobId == job.JobId).FirstOrDefault();
@@ -216,18 +186,10 @@ namespace CarWash.Areas.Api.Account.Controllers
                 int? imageid = null;
                 if(updateimage == null)
                 {
-                    Chat chat1 = new Chat();
-                    chat1.Message = "updateimage null";
-                    _context.Chat.Add(chat1);
-                    _context.SaveChanges();
                     imageid = ImageidDB(job.JobId);
                 }
                 else
                 {
-                    Chat chat2 = new Chat();
-                    chat2.Message = "updateimage not null " + updateimage.ImageId;
-                    _context.Chat.Add(chat2);
-                    _context.SaveChanges();
                     imageid = updateimage.ImageId;
                 }
                 ServiceImage imageservice = serviceDb != null ? imageservice = new ServiceImage(serviceDb) : imageservice = new ServiceImage();
@@ -238,24 +200,20 @@ namespace CarWash.Areas.Api.Account.Controllers
                     OtherImage otherImage = new OtherImage(image);
                     imageservice.OtherImagesService.Add(otherImage);
                 }
-                response.ImageId = imageid;
                 response.Success = true;
-                response.JobId = job.JobId;
                 response.Message = "สำเร็จ";
+                response.JobId = job.JobId;
+                response.ImageId = imageid;
                 response.Service = imageservice;
                 return Json(response);
             }
             catch(Exception ex)
             {
-                Chat chat2 = new Chat();
-                chat2.Message = "Error";
-                _context.Chat.Add(chat2);
-                _context.SaveChanges();
                 return BadRequest(ex.Message);
             }
 
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> Uploadimageservice([FromForm] StatusServiceImage image)
         {
@@ -685,7 +643,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             int idName = int.Parse(Id);
             BaseResponse response = new BaseResponse();
             Job JobStatusName = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
-            ImageidDB(JobStatusName.JobId);
             JobStatusName.StatusName = JobStatus.Desc.Arrive;
             _context.SaveChanges();
             response.Success = true;
@@ -931,92 +888,6 @@ namespace CarWash.Areas.Api.Account.Controllers
             _context.SaveChanges();
             return image.ImageId;
         }
-        [HttpGet]
-        public IActionResult Imageservicev1()
-        {
-            try
-            {
-                ImageServiceResponse response = new ImageServiceResponse();
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
-                Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
-                ImageService updateimage = _context.ImageService.Where(o => o.JobId == job.JobId).FirstOrDefault();
-                ImageService serviceDb = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == job.JobId).FirstOrDefault();
-                int? imageid = null;
-                if(updateimage == null)
-                {
-                    imageid = ImageidDB(job.JobId);
-                }
-                else
-                {
-                    imageid = updateimage.ImageId;
-                }
-                ServiceImage imageservice = serviceDb != null ? imageservice = new ServiceImage(serviceDb) : imageservice = new ServiceImage();
-
-                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
-                foreach(OthrerImage image in Jobimage)
-                {
-                    OtherImage otherImage = new OtherImage(image);
-                    imageservice.OtherImagesService.Add(otherImage);
-                }
-                response.ImageId = imageid;
-                response.Success = true;
-                response.JobId = job.JobId;
-                response.Message = "สำเร็จ";
-                response.Service = imageservice;
-                return Json(response);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
-        }
-        [HttpGet]
-        public IActionResult Imageservicev2()
-        {
-            try
-            {
-                ImageServiceResponse response = new ImageServiceResponse();
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
-                Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
-                ImageService updateimage = _context.ImageService.Where(o => o.JobId == job.JobId).FirstOrDefault();
-                ImageService serviceDb = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == job.JobId).FirstOrDefault();
-                int? imageid = null;
-                if(updateimage == null)
-                {
-                    imageid = ImageidDB(job.JobId);
-                }
-                else
-                {
-                    imageid = updateimage.ImageId;
-                }
-                ServiceImage imageservice = serviceDb != null ? imageservice = new ServiceImage(serviceDb) : imageservice = new ServiceImage();
-
-                List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
-                foreach(OthrerImage image in Jobimage)
-                {
-                    OtherImage otherImage = new OtherImage(image);
-                    imageservice.OtherImagesService.Add(otherImage);
-                }
-                response.ImageId = imageid;
-                response.Success = true;
-                response.JobId = job.JobId;
-                response.Message = "สำเร็จ";
-                response.Service = imageservice;
-                return Json(response);
-            }
-            catch(Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
-        }
-
-
     }
 }
 
