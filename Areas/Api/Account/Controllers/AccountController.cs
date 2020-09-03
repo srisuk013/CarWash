@@ -162,17 +162,17 @@ namespace CarWash.Areas.Account
                 if(result == IdentityResult.Success)
                 {
                     string roleName = "";
-                    if(req.Role == Role.Admin)
+                    switch(req.Role)
                     {
-                        roleName = Role.Desc.Admin;
-                    }
-                    else if(req.Role == Role.Customer)
-                    {
-                        roleName = Role.Desc.Customer;
-                    }
-                    else if(req.Role == Role.Employee)
-                    {
-                        roleName = Role.Desc.Employee;
+                        case Role.Admin:
+                            roleName = Role.Desc.Admin;
+                            break;
+                        case Role.Customer:
+                            roleName = Role.Desc.Admin;
+                            break;
+                        case Role.Employee:
+                            roleName = Role.Desc.Admin;
+                            break;
                     }
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);
                     if(roleResult == IdentityResult.Success)
@@ -339,7 +339,11 @@ namespace CarWash.Areas.Account
         {
             try
             {
+<<<<<<< HEAD
                 int userId = UserId();
+=======
+                int userId = IdUser();
+>>>>>>> DevOps-Dev
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.State = State.Off;
                 _context.User.Update(user);
@@ -414,7 +418,14 @@ namespace CarWash.Areas.Account
             }
             try
             {
+<<<<<<< HEAD
                 int userid = UserId();
+=======
+
+                string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                int userid = int.Parse(Id);
+>>>>>>> DevOps-Dev
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
                 user.Phone = reqChangePhone.Phone;
                 _context.User.Update(user);
@@ -602,10 +613,10 @@ namespace CarWash.Areas.Account
                 Job jobdb = _context.Job.Where(o => o.EmployeeId == userId).FirstOrDefault();
                 var job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId && o.JobDateTime.Year == year).FirstOrDefault();
                 HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == userId).FirstOrDefault();
-                var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId);
-                var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
-                var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
-                var dateYear = homeScoreSum.Select(o => o.CreatedTime.Year).FirstOrDefault();
+                HomeScore homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId).FirstOrDefault();
+                var dateDay = homeScoreSum.CreatedTime.Day;
+                var dateMonth = homeScoreSum.CreatedTime.Month;
+                var dateYear = homeScoreSum.CreatedTime.Year;
                 HomeScoreModel model = new HomeScoreModel();
                 HomeScoreResponse home = new HomeScoreResponse();
                 DateTime datenow = DateTime.Now;
@@ -647,11 +658,11 @@ namespace CarWash.Areas.Account
                 else if(dateMonth == month && dateYear == year)
                 {
                     var jobSum = job.JobId.ToString().Count();
-                    var CancellationSum = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault();
-                    var AcceptanceSum = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault();
-                    var jobMaxSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
-                    var ScoreSum = homeScoreSum.Select(o => o.Score).FirstOrDefault();
-                    var rating = homeScoreSum.Select(o => o.Rating)?.FirstOrDefault();
+                    var CancellationSum = homeScoreSum.Cancellation;
+                    var AcceptanceSum = homeScoreSum.Acceptance;
+                    var jobMaxSum = homeScoreSum.MaxJob;
+                    var ScoreSum = homeScoreSum.Score;
+                    var rating = homeScoreSum.Rating;
                     if(rating == null)
                     {
                         homeScore.Rating = 0;
@@ -745,7 +756,11 @@ namespace CarWash.Areas.Account
                 response.Message = "State มีค่า=0,1เท่านั้น";
                 return Json(response);
             }
+<<<<<<< HEAD
             int userId = UserId();
+=======
+            var userId = IdUser();
+>>>>>>> DevOps-Dev
             Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             if(req.State == State.Off)
             {
@@ -934,6 +949,14 @@ namespace CarWash.Areas.Account
             string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int userId = int.Parse(Id);
             return userId;
+        }
+
+        private int IdUser()
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int UserId = int.Parse(Id);
+            return UserId;
         }
 
     }
