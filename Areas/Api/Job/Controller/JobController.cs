@@ -235,11 +235,10 @@ namespace CarWash.Areas.Api.Account.Controllers
                             var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
                             var authEmailAndPassword = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
                             var cancellation = new CancellationTokenSource();
-                            string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                            int idName = int.Parse(Id);
+                            
+                            int userId = int.Parse(Id);
                             var nameImage = ServiceCheck.CheckImage(image.StatusService);
-                            Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+                            Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
                             OthrerImage other = new OthrerImage();
                             ImageService serviceDb = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == job.JobId).FirstOrDefault();
                             string name = job.JobId.ToString();
@@ -344,7 +343,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                                 _context.OthrerImage.Add(other);
                                 _context.SaveChanges();
                             }
-                            var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o => o.ImageService).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).ToList();
+                            var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o => o.ImageService).Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).ToList();
                             ServiceImage serviceImage = new ServiceImage(serviceDb);
                             List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == job.JobId).ToList();
                             foreach(OthrerImage images in Jobimage)
@@ -385,9 +384,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                     response.Message = "ไม่ได้ส่งตำแหน่ง";
                     return Json(response);
                 }
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
+                int userId = UserId();
                 CarWash.Models.DBModels.User userEmp = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 var jobDb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId);
                 userEmp.Latitude = req.Latitude;
@@ -413,17 +410,15 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpGet]
         public IActionResult History(long? DateBegin, long? DateEnd)
         {
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
+            int userId = UserId();
             HistoryResponse historyResponse = new HistoryResponse();
-            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             if(DateBegin == 0 && DateEnd == 0)
             {
                 string date = DateTime.Now.ToString("ddMMyyyyHHmm");
                 int month = Convert.ToInt32(date.Substring(2, 2));
                 var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Package.ModelPackage).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-               .Where(o => o.EmployeeId == idName && o.JobDateTime.Month == month && o.Report == null).ToList();
+               .Where(o => o.EmployeeId == userId && o.JobDateTime.Month == month && o.Report == null).ToList();
                 List<JobHistory> jobDb = new List<JobHistory>();
                 foreach(Job HistoryJob in JobDbmonth)
                 {
@@ -477,7 +472,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             DateTime datebegin = ServiceCheck.DateTime(DateBegin.Value);
             DateTime dateEnd = ServiceCheck.DateTime(DateEnd.Value);
             var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o => o.Package.ModelPackage)
-           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
+           .Where(o => o.EmployeeId == userId).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
             foreach(Job HistoryJob in JobDb)
             {
                 if(HistoryJob == null)
@@ -547,16 +542,13 @@ namespace CarWash.Areas.Api.Account.Controllers
                 jobRequest.Message = "JobStatusไม่ถูกกต้อง";
                 return Json(jobRequest);
             }
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
+            int userId = UserId();
             JobRequset jobrequset = new JobRequset();
             string date = DateTime.Now.ToString("ddMMyyyyHHmm");
             int month = Convert.ToInt32(date.Substring(2, 2));
-            HomeScore homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == idName).FirstOrDefault();
-            var homeScore = _context.HomeScore.Where(o => o.EmployeeId == idName).FirstOrDefault();
-            // var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.ImageSevice).Include(o => o.Customer).Include(o => o.Package).Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId);
-            Job job = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+            HomeScore homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId).FirstOrDefault();
+            var homeScore = _context.HomeScore.Where(o => o.EmployeeId == userId).FirstOrDefault();
+            Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
             int sum = 1;
             var dateMonth = homeScoreSum.CreatedTime.Month;
             if(dateMonth != month)
@@ -578,7 +570,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                     _context.HomeScore.Update(homeScore);
                     _context.SaveChanges();
                 }
-                var userstate = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                var userstate = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 userstate.State = State.On;
                 homeScore.Cancellation = homeScoreSum.Cancellation + sum;
                 homeScore.CreatedTime = DateTime.Now;
@@ -601,9 +593,9 @@ namespace CarWash.Areas.Api.Account.Controllers
                 }
                 BaseResponse response = new BaseResponse();
                 var joudb = _context.Job.Where(o => o.JobId == status.JobId).FirstOrDefault();
-                joudb.EmployeeId = idName;
+                joudb.EmployeeId = userId;
                 _context.Job.Update(joudb);
-                var user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                var user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.State = State.Off;
                 _context.User.Update(user);
                 homeScore.Acceptance = homeScoreSum.Acceptance + sum;
@@ -623,7 +615,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                     homeScore.Timeout = 0;
                     _context.SaveChanges();
                 }
-                var userstate = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                var userstate = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 userstate.State = State.On;
                 homeScore.Timeout = homeScoreSum.Timeout + sum;
                 _context.SaveChanges();
@@ -638,11 +630,9 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpPost]
         public IActionResult StatusService()
         {
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
+            int userId = UserId();
             BaseResponse response = new BaseResponse();
-            Job JobStatusName = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
+            Job JobStatusName = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
             JobStatusName.StatusName = JobStatus.Desc.Arrive;
             _context.SaveChanges();
             response.Success = true;
@@ -653,12 +643,10 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpPost]
         public IActionResult PaymentJob()
         {
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
+            int userId = UserId();
             BaseResponse response = new BaseResponse();
-            Job JobStatusName = _context.Job.Where(o => o.EmployeeId == idName).OrderByDescending(o => o.JobId).FirstOrDefault();
-            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            Job JobStatusName = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
+            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             user.State = State.On;
             JobStatusName.StatusName = JobStatus.Desc.Payment;
             response.Success = true;
@@ -680,9 +668,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             }
             try
             {
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
+                int userId = UserId();
                 CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 Job job = _context.Job.Where(o => o.EmployeeId == userId).OrderByDescending(o => o.JobId).FirstOrDefault();
                 job.Report = req.Report;
@@ -707,10 +693,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             BaseResponse response = new BaseResponse();
             try
             {
-
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
+                int userId = UserId();
                 Chat chatHub = new Chat();
                 chatHub.Message = chat.Message;
                 chatHub.Name = chat.Name;
@@ -741,11 +724,9 @@ namespace CarWash.Areas.Api.Account.Controllers
         {
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
+                int userId = UserId();
                 Job job = new Job();
-                job.CustomerId = idName;
+                job.CustomerId = userId;
                 job.JobDateTime = DateTime.Now;
                 job.PackageId = req.PackageId;
                 job.CarId = req.CarId;
@@ -782,7 +763,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 var listCount = (filteredList.Count() < 5) ? filteredList.Count() : 5;
                 for(int Index = 0; Index < listCount; Index++)
                 {
-                    var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.CustomerId == idName).OrderByDescending(o => o.JobId);
+                    var jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Package).Where(o => o.CustomerId == userId).OrderByDescending(o => o.JobId);
                     var EmpId = jobdb.Select(o => o.EmployeeId).FirstOrDefault();
                     if(EmpId == null)
                     {
@@ -846,10 +827,7 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpGet]
         public async Task<IActionResult> FetchJobinfoAsync(int jobid)
         {
-
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int userId = int.Parse(Id);
+            int userId = UserId();
             JobRequestResponse reqresponse = new JobRequestResponse();
             Job job = _context.Job.Where(o => o.JobId == jobid && o.EmployeeId == userId).FirstOrDefault();
             if(job == null)
@@ -859,7 +837,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 response.Message = "ไม่พบข้อมูลในระบบ";
                 return Json(response);
             }
-            Job jobdbupdate = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o=>o.Car).Include(o => o.Package).Include(o=>o.Package.ModelPackage).Where(o => o.EmployeeId == userId && o.JobId == jobid).FirstOrDefault();
+            Job jobdbupdate = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Include(o => o.Car).Include(o => o.Package).Include(o => o.Package.ModelPackage).Where(o => o.EmployeeId == userId && o.JobId == jobid).FirstOrDefault();
             JobRequset jobrequset = new JobRequset();
             jobrequset.EmployeeId = userId;
             jobrequset.JobId = jobdbupdate.JobId;
@@ -868,7 +846,7 @@ namespace CarWash.Areas.Api.Account.Controllers
             jobrequset.ImageProfile = jobdbupdate.Customer.Image;
             jobrequset.Latitude = jobdbupdate.Latitude;
             jobrequset.Longitude = jobdbupdate.Longitude;
-            string location = await ServiceCheck.LocationAsync(jobdbupdate.Longitude,jobdbupdate.Latitude);
+            string location = await ServiceCheck.LocationAsync(jobdbupdate.Longitude, jobdbupdate.Latitude);
             jobrequset.Location = location;
             jobrequset.PackageName = jobdbupdate.Package.ModelPackage.PackageName;
             jobrequset.VehicleRegistration = jobdbupdate.Car.VehicleRegistration;
@@ -887,6 +865,13 @@ namespace CarWash.Areas.Api.Account.Controllers
             _context.ImageService.Add(image);
             _context.SaveChanges();
             return image.ImageId;
+        }
+        private int UserId()
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userId = int.Parse(Id);
+            return userId;
         }
     }
 }

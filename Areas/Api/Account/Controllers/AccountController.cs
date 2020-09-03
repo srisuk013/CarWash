@@ -339,10 +339,8 @@ namespace CarWash.Areas.Account
         {
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                int userId = UserId();
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.State = State.Off;
                 _context.User.Update(user);
                 _context.SaveChanges();
@@ -366,10 +364,8 @@ namespace CarWash.Areas.Account
         {
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                int userid = UserId();
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
                 UserInfo userInfo = new UserInfo();
                 userInfo.UserId = user.UserId;
                 userInfo.FullName = user.FullName;
@@ -400,7 +396,7 @@ namespace CarWash.Areas.Account
                 response.Message = "กรุณาใส่เบอร์";
                 return Json(response);
             }
-          else if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
+            else if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
             {
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
@@ -418,10 +414,7 @@ namespace CarWash.Areas.Account
             }
             try
             {
-               
-                string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userid = int.Parse(Id);
+                int userid = UserId();
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
                 user.Phone = reqChangePhone.Phone;
                 _context.User.Update(user);
@@ -458,9 +451,7 @@ namespace CarWash.Areas.Account
             }
             try
             {
-                string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userid = int.Parse(Id);
+                int userid = UserId();
                 UserLogs user = new UserLogs();
                 if(req.LogsStatus == 1)
                 {
@@ -603,9 +594,7 @@ namespace CarWash.Areas.Account
         {
             try
             {
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
+                int userId = UserId();
                 String date = DateTime.Now.ToString("ddMMyyyyHHmm");
                 int day = Convert.ToInt32(date.Substring(0, 2));
                 int month = Convert.ToInt32(date.Substring(2, 2));
@@ -683,7 +672,7 @@ namespace CarWash.Areas.Account
                     double? ratings = ((ScoreSum / jobSum));
                     string showratings = String.Format("{0:0}", ratings);
                     model.Ratings = showratings + ".00";
-                    if(jobMaxSum==0)
+                    if(jobMaxSum == 0)
                     {
                         jobMaxSum = 1;
                     }
@@ -724,9 +713,7 @@ namespace CarWash.Areas.Account
             }
             try
             {
-                string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userId = int.Parse(Id);
+                int userId = UserId();
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.Latitude = location.latitude;
                 user.Longitude = location.longitude;
@@ -758,9 +745,7 @@ namespace CarWash.Areas.Account
                 response.Message = "State มีค่า=0,1เท่านั้น";
                 return Json(response);
             }
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int userId = int.Parse(Id);
+            int userId = UserId();
             Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             if(req.State == State.Off)
             {
@@ -942,6 +927,13 @@ namespace CarWash.Areas.Account
                 signInResponse.Success = false;
                 return Json(signInResponse);
             }
+        }
+        private int UserId()
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userId = int.Parse(Id);
+            return userId;
         }
 
     }
