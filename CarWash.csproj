@@ -6,9 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\Api\Account\Models\**" />
+    <Compile Remove="Areas\Api\CusAccount\**" />
     <Compile Remove="Controllers\1\**" />
+    <Content Remove="Areas\Api\Account\Models\**" />
+    <Content Remove="Areas\Api\CusAccount\**" />
     <Content Remove="Controllers\1\**" />
+    <EmbeddedResource Remove="Areas\Api\Account\Models\**" />
+    <EmbeddedResource Remove="Areas\Api\CusAccount\**" />
     <EmbeddedResource Remove="Controllers\1\**" />
+    <None Remove="Areas\Api\Account\Models\**" />
+    <None Remove="Areas\Api\CusAccount\**" />
     <None Remove="Controllers\1\**" />
   </ItemGroup>
 
@@ -77,8 +85,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\Api\Account\Models\" />
-    <Folder Include="Areas\Api\CusAccount\shop\" />
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 

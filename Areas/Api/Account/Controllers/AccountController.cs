@@ -162,17 +162,17 @@ namespace CarWash.Areas.Account
                 if(result == IdentityResult.Success)
                 {
                     string roleName = "";
-                    if(req.Role == Role.Admin)
+                    switch(req.Role)
                     {
-                        roleName = Role.Desc.Admin;
-                    }
-                    else if(req.Role == Role.Customer)
-                    {
-                        roleName = Role.Desc.Customer;
-                    }
-                    else if(req.Role == Role.Employee)
-                    {
-                        roleName = Role.Desc.Employee;
+                        case Role.Admin:
+                            roleName = Role.Desc.Admin;
+                            break;
+                        case Role.Customer:
+                            roleName = Role.Desc.Admin;
+                            break;
+                        case Role.Employee:
+                            roleName = Role.Desc.Admin;
+                            break;
                     }
                     IdentityResult roleResult = await _userManager.AddToRoleAsync(aspnetUser, roleName);
                     if(roleResult == IdentityResult.Success)
@@ -339,10 +339,8 @@ namespace CarWash.Areas.Account
         {
             try
             {
-                string userId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int idName = int.Parse(Id);
-                Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+                int userId = IdUser();
+                Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.State = State.Off;
                 _context.User.Update(user);
                 _context.SaveChanges();
@@ -400,7 +398,7 @@ namespace CarWash.Areas.Account
                 response.Message = "กรุณาใส่เบอร์";
                 return Json(response);
             }
-          else if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
+            else if(ServiceCheck.PhoneCheck(reqChangePhone.Phone) != false)
             {
                 response.Message = "กรุณาตรวจสอบเบอร์";
                 return Json(response);
@@ -418,7 +416,7 @@ namespace CarWash.Areas.Account
             }
             try
             {
-               
+
                 string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
                 string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 int userid = int.Parse(Id);
@@ -613,10 +611,10 @@ namespace CarWash.Areas.Account
                 Job jobdb = _context.Job.Where(o => o.EmployeeId == userId).FirstOrDefault();
                 var job = _context.Job.Include(o => o.Employee).Include(o => o.Customer).Where(o => o.EmployeeId == userId && o.JobDateTime.Year == year).FirstOrDefault();
                 HomeScore homeScore = _context.HomeScore.Where(o => o.EmployeeId == userId).FirstOrDefault();
-                var homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId);
-                var dateDay = homeScoreSum.Select(o => o.CreatedTime.Day).FirstOrDefault();
-                var dateMonth = homeScoreSum.Select(o => o.CreatedTime.Month).FirstOrDefault();
-                var dateYear = homeScoreSum.Select(o => o.CreatedTime.Year).FirstOrDefault();
+                HomeScore homeScoreSum = _context.HomeScore.Include(o => o.Employee).Where(o => o.EmployeeId == userId).FirstOrDefault();
+                var dateDay = homeScoreSum.CreatedTime.Day;
+                var dateMonth = homeScoreSum.CreatedTime.Month;
+                var dateYear = homeScoreSum.CreatedTime.Year;
                 HomeScoreModel model = new HomeScoreModel();
                 HomeScoreResponse home = new HomeScoreResponse();
                 DateTime datenow = DateTime.Now;
@@ -658,11 +656,11 @@ namespace CarWash.Areas.Account
                 else if(dateMonth == month && dateYear == year)
                 {
                     var jobSum = job.JobId.ToString().Count();
-                    var CancellationSum = homeScoreSum.Select(o => o.Cancellation).FirstOrDefault();
-                    var AcceptanceSum = homeScoreSum.Select(o => o.Acceptance).FirstOrDefault();
-                    var jobMaxSum = homeScoreSum.Select(o => o.MaxJob).FirstOrDefault();
-                    var ScoreSum = homeScoreSum.Select(o => o.Score).FirstOrDefault();
-                    var rating = homeScoreSum.Select(o => o.Rating)?.FirstOrDefault();
+                    var CancellationSum = homeScoreSum.Cancellation;
+                    var AcceptanceSum = homeScoreSum.Acceptance;
+                    var jobMaxSum = homeScoreSum.MaxJob;
+                    var ScoreSum = homeScoreSum.Score;
+                    var rating = homeScoreSum.Rating;
                     if(rating == null)
                     {
                         homeScore.Rating = 0;
@@ -683,7 +681,7 @@ namespace CarWash.Areas.Account
                     double? ratings = ((ScoreSum / jobSum));
                     string showratings = String.Format("{0:0}", ratings);
                     model.Ratings = showratings + ".00";
-                    if(jobMaxSum==0)
+                    if(jobMaxSum == 0)
                     {
                         jobMaxSum = 1;
                     }
@@ -758,9 +756,7 @@ namespace CarWash.Areas.Account
                 response.Message = "State มีค่า=0,1เท่านั้น";
                 return Json(response);
             }
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int userId = int.Parse(Id);
+            var userId = IdUser();
             Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             if(req.State == State.Off)
             {
@@ -942,6 +938,14 @@ namespace CarWash.Areas.Account
                 signInResponse.Success = false;
                 return Json(signInResponse);
             }
+        }
+
+        private int IdUser()
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int UserId = int.Parse(Id);
+            return UserId;
         }
 
     }
