@@ -339,11 +339,7 @@ namespace CarWash.Areas.Account
         {
             try
             {
-<<<<<<< HEAD
                 int userId = UserId();
-=======
-                int userId = IdUser();
->>>>>>> DevOps-Dev
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
                 user.State = State.Off;
                 _context.User.Update(user);
@@ -418,14 +414,7 @@ namespace CarWash.Areas.Account
             }
             try
             {
-<<<<<<< HEAD
                 int userid = UserId();
-=======
-
-                string claimsuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-                string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                int userid = int.Parse(Id);
->>>>>>> DevOps-Dev
                 Models.DBModels.User user = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
                 user.Phone = reqChangePhone.Phone;
                 _context.User.Update(user);
@@ -756,11 +745,7 @@ namespace CarWash.Areas.Account
                 response.Message = "State มีค่า=0,1เท่านั้น";
                 return Json(response);
             }
-<<<<<<< HEAD
             int userId = UserId();
-=======
-            var userId = IdUser();
->>>>>>> DevOps-Dev
             Models.DBModels.User user = _context.User.Where(o => o.UserId == userId).FirstOrDefault();
             if(req.State == State.Off)
             {
