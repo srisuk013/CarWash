@@ -936,14 +936,6 @@ namespace CarWash.Areas.Account
             return userId;
         }
 
-        private int IdUser()
-        {
-            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int UserId = int.Parse(Id);
-            return UserId;
-        }
-
     }
 }
 
