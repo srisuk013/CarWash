@@ -252,31 +252,27 @@ namespace CarWash.Service
             }
 
         }
-        public static async Task<string> DistanceAsync(double emplon, double emplat, double cuslon, double cuslat)
+        public static async Task<string> DistanceAsync(Double emplon, Double emplat, Double cuslon, Double cuslat)
         {
-            string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
+            
             string empLongitude = "flon=" + emplon.ToString();
             string empLatitude = "&flat=" + emplat.ToString();
             string cusLongitude = "&tlon=" + cuslon.ToString();  
             string cusLatitude = "&tlat=" + cuslat.ToString();
-            
+            string key = "&mode=t&type=25&locale=th&key=c1d2a99899af37a0e2b5b1a3a1b1088e";
+
             string Baseurl = "https://mmmap15.longdo.com/mmroute/json/route/guide?" + empLongitude + empLatitude+ cusLongitude + cusLatitude + key;
             LocationReponse EmpInfo = new LocationReponse();
             using(var client = new HttpClient())
             {
-                //Passing service base url  
                 client.BaseAddress = new Uri(Baseurl);
                 client.DefaultRequestHeaders.Clear();
-                //Define request data format  
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                //Sending request to find web api REST service resource GetAllEmployees using HttpClient  
                 HttpResponseMessage Res = await client.GetAsync(Baseurl);
-                //Checking the response is successful or not which is sent using HttpClient  
                 if(Res.IsSuccessStatusCode)
                 {
-                    //Storing the response details recieved from web api   
+                   
                     var EmpResponse = Res.Content.ReadAsStringAsync().Result;
-                    //Deserializing the response recieved from web api and storing into the Employee list  
                     EmpInfo = JsonConvert.DeserializeObject<LocationReponse>(EmpResponse);
                 }
                 double Distance = EmpInfo.data.Select(o => o.distance).FirstOrDefault();
@@ -285,6 +281,7 @@ namespace CarWash.Service
                 return showDistance;
             }
         }
+       
         public static double CalculateDistance(double cuslat, double cuslon, double emplat, double emplon)
         {
             GeoCoordinate customer = new GeoCoordinate(cuslat, cuslon);

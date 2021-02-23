@@ -10,6 +10,11 @@ namespace CarWash.Hubs
 {
     public class ChatHub : Hub
     {
+        public async Task ChatViewFromServer(string message)
+        {
+            Console.WriteLine("Receive posion from Server app :" + message + "/" );
+            await Clients.Others.SendAsync("ReceiveNewPosition", message);
+        }
         private IHubContext<ChatHub> HubContext{ get; set; }
     }
 }

@@ -11,6 +11,8 @@ namespace CarWash.Areas.Api.Models.Models
         public int CarId;
         public string VehicleRegistration;
         public string Brand;
+        public string Modelcar;
+        public string Province;
 
         public ChooseMyCar()
         {
@@ -22,6 +24,8 @@ namespace CarWash.Areas.Api.Models.Models
             this.CarId = car.CarId;
             this.VehicleRegistration = car.VehicleRegistration;
             this.Brand = car.Brand.BrandName;
+            this.Modelcar = car.Model_.ModelName;
+            this.Province = car.Province.ProvinceName;
 
         }
 

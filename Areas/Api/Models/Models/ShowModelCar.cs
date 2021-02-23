@@ -8,15 +8,15 @@ namespace CarWash.Areas.Api.Models.Models
 {
     public class ShowModelCar
     {
-        public List<CarModels> models;
-        public List<Listprovince> province;
+        public List<Brand> models;
+         
 
 
 
         public ShowModelCar()
         {
-            this.models = new List<CarModels>();
-            this.province = new List<Listprovince>();
+            this.models = new List<Brand>();
+           
         }
 
 

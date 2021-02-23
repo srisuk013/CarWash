@@ -23,6 +23,9 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Security.Claims;
 using System.Threading;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using CarWash.Areas.Api.Models.ModelsResponse;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -115,7 +118,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 }
                 responses.Success = true;
                 responses.Message = "สำเร็จ";
-                responses.Service = service;
+                responses.ServiceImage = service;
                 return Json(responses);
             }
             catch(Exception)
@@ -155,7 +158,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 }
                 responses.Success = true;
                 responses.Message = "สำเร็จ";
-                responses.Service = service;
+                responses.ServiceImage = service;
                 return Json(responses);
             }
             catch(Exception)
@@ -198,7 +201,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                 response.Message = "สำเร็จ";
                 response.JobId = job.JobId;
                 response.ImageId = imageid;
-                response.Service = imageservice;
+                response.ServiceImage = imageservice;
                 return Json(response);
             }
             catch(Exception ex)
@@ -718,13 +721,21 @@ namespace CarWash.Areas.Api.Account.Controllers
         [HttpPost]
         public async Task<IActionResult> BookingJobAsync([FromBody] ReqBookingJob req)
         {
+            UserInfoResponse response = new UserInfoResponse();
+            int jobid = 0;
+
             try
             {
+
                 int userId = UserId();
                 Job job = new Job();
                 job.CustomerId = userId;
                 job.JobDateTime = DateTime.Now;
-                job.PackageId = req.PackageId;
+                if(req.PackageId != 0)
+                {
+                    job.PackageId = req.PackageId;
+                }
+
                 job.CarId = req.CarId;
                 job.Latitude = req.Latitude;
                 job.Longitude = req.Longitude;
@@ -773,7 +784,7 @@ namespace CarWash.Areas.Api.Account.Controllers
                             var state = statename.Select(o => o.State).FirstOrDefault();
                             if(state == 1)
                             {
-
+                                jobid = jobname.JobId;
                                 jobname.JobId = jobdb.JobId;
                                 jobname.EmployeeId = filteredList[Index].UserId;
                                 string receiveEmployee = "ReceiveEmployee" + filteredList[Index].UserId.ToString();
@@ -781,8 +792,8 @@ namespace CarWash.Areas.Api.Account.Controllers
                                 jobname.Phone = jobdb.Customer.Phone;
                                 jobname.ImageProfile = jobdb.Customer.Image;
                                 var latlon = _context.User.Where(o => o.UserId == filteredList[Index].UserId).FirstOrDefault();
-                                double lon = latlon.Longitude ??= 0;
-                                double lat = latlon.Latitude ??= 0;
+                                Double lon = latlon.Longitude ??= 0;
+                                Double lat = latlon.Latitude ??= 0;
                                 string showDistance = await ServiceCheck.DistanceAsync(lon, lat, req.Longitude, req.Latitude);
                                 jobname.Location = location;
                                 jobname.Distance = showDistance;
@@ -802,24 +813,121 @@ namespace CarWash.Areas.Api.Account.Controllers
                             }
                         }
                     }
-                    var nameIdEmp = jobdb.EmployeeId;
-                    if(nameIdEmp != null)
+                    int employeeid;
+
+                    var nameIdEmp = employeeid = await infoempAsync(jobdb.CustomerId);
+                    if(nameIdEmp != 0)
                     {
-                        BaseResponse response = new BaseResponse();
+                       var infoname = await userinfoempnameAsync(nameIdEmp);
+                       var phone = await userinfoempphoneAsync(nameIdEmp);
+                       var image = await userinfoempimageAsync(nameIdEmp);
+                        UserInfo EmpInfo = new UserInfo();
+                        EmpInfo.FullName = infoname;
+                        EmpInfo.Phone = phone;
+                        EmpInfo.Image = image;
+                        response.UserInfo = EmpInfo;
                         response.Success = true;
                         response.Message = "สำเร็จ";
                         return Json(response);
                     }
+                    else
+                    {
+                        response.UserInfo = null;
+                        response.Success = false;
+                        response.Message = "ไม่พบพนักงานอยู่ในพื้นที่บริการในตอนนี้";
+                        return Json(response);
+                    }
                 }
+
             }
             catch(Exception)
             {
-
+                response.UserInfo = null;
+                response.Success = false;
+                response.Message = "ไม่พบพนักงานอยู่ในพื้นที่บริการในตอนนี้";
+                return Json(response);
             }
-            BaseResponse baseResponse = new BaseResponse();
-            baseResponse.Success = false;
-            baseResponse.Message = "ไม่สำเร็จ";
-            return Json(baseResponse);
+            return Json(response);
+        }
+        public static async Task<int> infoempAsync(int id)
+        {
+            string Api = "api/job/CheckEmployee?Id=";
+            string Baseurl = "https://sncarwash.azurewebsites.net/" + Api + id;
+            IdResponse EmpInfo = new IdResponse();
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                if(Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    EmpInfo = JsonConvert.DeserializeObject<IdResponse>(EmpResponse);
+                }
+                var response = EmpInfo.Id;
+                return response;
+            }
+        }
+        public static async Task<string> userinfoempnameAsync(int id)
+        {
+            string Api = "api/job/Userinfo?Id=";
+            string Baseurl = "https://sncarwash.azurewebsites.net/" + Api + id;
+            UserInfo EmpInfo = new UserInfo();
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                if(Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    EmpInfo = JsonConvert.DeserializeObject<UserInfo>(EmpResponse);
+                }
+                var response = EmpInfo.FullName;
+                return response;
+            }
+        }
+        public static async Task<string> userinfoempphoneAsync(int id)
+        {
+            string Api = "api/job/Userinfo?Id=";
+            string Baseurl = "https://sncarwash.azurewebsites.net/" + Api + id;
+            UserInfo EmpInfo = new UserInfo();
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                if(Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    EmpInfo = JsonConvert.DeserializeObject<UserInfo>(EmpResponse);
+                }
+                var response = EmpInfo.FullName;
+                return response;
+            }
+        }
+        public static async Task<string> userinfoempimageAsync(int id)
+        {
+            string Api = "api/job/Userinfo?Id=";
+            string Baseurl = "https://sncarwash.azurewebsites.net/" + Api + id;
+            UserInfo EmpInfo = new UserInfo();
+            using(var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage Res = await client.GetAsync(Baseurl);
+                if(Res.IsSuccessStatusCode)
+                {
+                    var EmpResponse = Res.Content.ReadAsStringAsync().Result;
+                    EmpInfo = JsonConvert.DeserializeObject<UserInfo>(EmpResponse);
+                }
+                var response = EmpInfo.FullName;
+                return response;
+            }
         }
 
         [HttpGet]
@@ -871,6 +979,47 @@ namespace CarWash.Areas.Api.Account.Controllers
             int userId = int.Parse(Id);
             return userId;
         }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> BookingV2JobAsync([FromBody] ReqBookingJob req)
+        {
+            BaseResponse response = new BaseResponse();
+            try
+            {
+                JobRequset jobname = new JobRequset();
+                JobRequestResponse json = new JobRequestResponse();
+                int userId = UserId();
+                Job job = new Job();
+                job.CustomerId = userId;
+                job.JobDateTime = DateTime.Now;
+                if(req.PackageId != 0)
+                {
+                    job.PackageId = req.PackageId;
+                }
+                job.CarId = req.CarId;
+                job.Latitude = req.Latitude;
+                job.Longitude = req.Longitude;
+                job.StatusId = 1;
+                Package package = _context.Package.Where(o => o.PackageId == req.PackageId).FirstOrDefault();
+                job.TotalPrice = (int)package.Price;
+                job.StatusName = JobStatus.Desc.BookingJob;
+                string location = await ServiceCheck.LocationAsync(req.Longitude, req.Latitude);
+                job.Location = location;
+                _context.Job.Add(job);
+                _context.SaveChanges();
+                response.Message = "สำเร็จ";
+                response.Success = true;
+            }
+            catch
+            {
+                response.Message = "ไม่สำเร็จ";
+                response.Success = false;
+            }
+            return Json(response);
+        }
+
     }
 }
 

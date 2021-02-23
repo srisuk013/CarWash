@@ -9,9 +9,9 @@ namespace CarWash.Areas.Api.Models.Models
     public class ListPackageAll
     {
 
-        public string SizeName;
-        public string Packagename;
-        public string Price;
+       
+       
+        public string Price_s;
 
         public ListPackageAll()
         {
@@ -19,9 +19,7 @@ namespace CarWash.Areas.Api.Models.Models
 
         public ListPackageAll(Package package)
         {
-            this.Packagename = package.ModelPackage.PackageName;
-            this.SizeName = package.Size.SizeName;
-            this.Price = package.Price.ToString();
+            this.Price_s = package.Price.ToString();
         }
     }
 }
