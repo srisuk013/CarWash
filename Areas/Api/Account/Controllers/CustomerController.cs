@@ -11,7 +11,6 @@ using CarWash.Models.DBModels;
 using CarWash.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace CarWash.Areas.Api.Account.Controllers
 {
@@ -35,31 +34,19 @@ namespace CarWash.Areas.Api.Account.Controllers
             string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int idName = int.Parse(Id);
-            ShowModelCar showModel = new ShowModelCar();
-            var Car = _context.CarModel.Include(o => o.Brand).Include(o => o.Size).ToList();
-            foreach(CarModel carIn in Car)
+            ShowModelCar brandcar = new ShowModelCar();
+            var Car = _context.CarBrand.ToList();
+            foreach(CarBrand carIn in Car)
             {
-                CarModels models = new CarModels();
-                models.Model_Id = carIn.Model_Id;
-                models.ModelName = carIn.ModelName;
-                models.BrandId = carIn.Brand.BrandId;
-                models.BrandName = carIn.Brand.BrandName;
-                models.SizeId = carIn.Size.SizeId;
-                models.SizeName = carIn.Size.SizeName;
-                showModel.models.Add(models);
-            }
-            var province = _context.Province.Include(o => o.Car).ToList();
-            foreach(Province provincename in province)
-            {
-                Listprovince listprovince = new Listprovince();
-                listprovince.ProvinceId = provincename.ProvinceId;
-                listprovince.ProvinceName = provincename.ProvinceName;
-                showModel.province.Add(listprovince);
+                Brand models = new Brand();
+                models.BrandId = carIn.BrandId;
+                models.BrandName = carIn.BrandName;
+                brandcar.models.Add(models);
             }
             ShowInformationResponse reponse = new ShowInformationResponse();
             reponse.Success = true;
             reponse.Message = "สำเร็จ";
-            reponse.Shows = showModel;
+            reponse.Brand = brandcar;
             return Json(reponse);
         }
 
@@ -213,18 +200,14 @@ namespace CarWash.Areas.Api.Account.Controllers
                     foreach(Package package in packageall)
                     {
                         ListPackageAll listPackage = new ListPackageAll();
-                        listPackage.Packagename = package.ModelPackage.PackageName;
-                        listPackage.SizeName = package.Size.SizeName;
-                        listPackage.Price = package.Price.ToString();
+                        listPackage.Price_s = package.Price.ToString();
                         listPackageDbV1.Add(listPackage);
                     }
                     var packageall1 = _context.Package.Include(o => o.ModelPackage).Include(o => o.Size).Where(o => o.ModelPackageId == 2).ToList();
                     foreach(Package package in packageall)
                     {
                         ListPackageAll listPackage = new ListPackageAll();
-                        listPackage.Packagename = package.ModelPackage.PackageName;
-                        listPackage.SizeName = package.Size.SizeName;
-                        listPackage.Price = package.Price.ToString();
+                        listPackage.Price_s = package.Price.ToString();
                         listPackageDb.Add(listPackage);
                     }
                     showPackage.Message = "สำเร็จ";
@@ -254,15 +237,17 @@ namespace CarWash.Areas.Api.Account.Controllers
             string claimuserid = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
             string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             int userid = int.Parse(Id);
-            var mycar = _context.Car.Include(o => o.Brand).Include(o => o.Model_).Where(o => o.UserId == userid).ToList();
+            var mycar = _context.Car.Include(o => o.Brand).Include(o => o.Model_).Include(o=>o.Province).Where(o => o.UserId == userid).ToList();
             ChooseCarResponse response = new ChooseCarResponse();
             List<ChooseMyCar> chooseMyCars = new List<ChooseMyCar>();
-            foreach(Car car in mycar )
+            foreach(Car car in mycar)
             {
-                ChooseMyCar cars = new ChooseMyCar();                                                                 
+                ChooseMyCar cars = new ChooseMyCar();
                 cars.CarId = car.CarId;
                 cars.Brand = car.Brand.BrandName;
+                cars.Modelcar = car.Model_.ModelName;
                 cars.VehicleRegistration = car.VehicleRegistration;
+                cars.Province = car.Province.ProvinceName;
                 chooseMyCars.Add(cars);
             }
             response.Success = true;
@@ -272,52 +257,53 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Json(response);
         }
         [HttpGet]
+        [ServiceFilter(typeof(CarWashAuthorization))]
         public IActionResult History(long? DateBegin, long? DateEnd)
         {
             string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
-            String Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            int idName = int.Parse(Id);
-            HistoryResponse historyResponse = new HistoryResponse();
-            CarWash.Models.DBModels.User user = _context.User.Where(o => o.UserId == idName).FirstOrDefault();
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userid = int.Parse(Id);
+            HistoryResponseV2 historyResponse = new HistoryResponseV2();
+            User user = _context.User.Where(o => o.UserId == userid).FirstOrDefault();
             if(DateBegin == 0 && DateEnd == 0)
             {
                 string date = DateTime.Now.ToString("ddMMyyyyHHmm");
                 int month = Convert.ToInt32(date.Substring(2, 2));
                 var JobDbmonth = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Package.ModelPackage).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage)
-               .Where(o => o.EmployeeId == idName && o.JobDateTime.Month == month && o.Report == null).ToList();
-                List<JobHistory> jobDb = new List<JobHistory>();
+               .Where(o => o.CustomerId == userid && o.JobDateTime.Month == month && o.Report == null && o.EmployeeId != null).ToList();
+                List<HistoryCustomer> jobDb = new List<HistoryCustomer>();
                 foreach(Job HistoryJob in JobDbmonth)
                 {
-                    JobHistory job = new JobHistory(HistoryJob);
+                    HistoryCustomer job = new HistoryCustomer(HistoryJob);
                     List<ImageService> imageSevices = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
                     foreach(ImageService sevice in imageSevices)
                     {
                         ImageServicesModel imageFrontBefore = new ImageServicesModel();
-                        imageFrontBefore.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                        imageFrontBefore.Image = sevice.FrontBefore;
                         job.ImagesBeforeService.Add(imageFrontBefore);
                         ImageServicesModel imageBackBefore = new ImageServicesModel();
-                        imageBackBefore.Image = imageSevices.Select(o => o.BackBefore).FirstOrDefault();
+                        imageBackBefore.Image = sevice.BackBefore;
                         job.ImagesBeforeService.Add(imageBackBefore);
                         ImageServicesModel imageLaftBefore = new ImageServicesModel();
-                        imageLaftBefore.Image = imageSevices.Select(o => o.LeftBefore).FirstOrDefault();
+                        imageLaftBefore.Image = sevice.LeftBefore;
                         job.ImagesBeforeService.Add(imageLaftBefore);
                         ImageServicesModel imageRightBefore = new ImageServicesModel();
-                        imageRightBefore.Image = imageSevices.Select(o => o.RightBefore).FirstOrDefault();
+                        imageRightBefore.Image = sevice.RightBefore;
                         job.ImagesBeforeService.Add(imageRightBefore);
                     }
                     foreach(ImageService sevice in imageSevices)
                     {
                         AfterImage imageFrontAfter = new AfterImage();
-                        imageFrontAfter.Image = sevice.FrontAfter;// imageSevices.Select(o => o.FrontAfter).FirstOrDefault();
+                        imageFrontAfter.Image = sevice.FrontAfter;
                         job.ImagesAfterService.Add(imageFrontAfter);
                         AfterImage imageBackAfter = new AfterImage();
-                        imageBackAfter.Image = imageSevices.Select(o => o.BackAfter).FirstOrDefault();
+                        imageBackAfter.Image = sevice.BackAfter;
                         job.ImagesAfterService.Add(imageBackAfter);
                         AfterImage imageLaftAfter = new AfterImage();
-                        imageLaftAfter.Image = imageSevices.Select(o => o.LeftAfter).FirstOrDefault();
+                        imageLaftAfter.Image = sevice.LeftAfter;
                         job.ImagesAfterService.Add(imageLaftAfter);
                         AfterImage imageRightAfter = new AfterImage();
-                        imageRightAfter.Image = imageSevices.Select(o => o.RightAfter).FirstOrDefault();
+                        imageRightAfter.Image = sevice.RightAfter;
                         job.ImagesAfterService.Add(imageRightAfter);
                     }
                     List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
@@ -334,11 +320,11 @@ namespace CarWash.Areas.Api.Account.Controllers
                 historyResponse.Histories = jobDb;
                 return Json(historyResponse);
             }
-            List<JobHistory> jobdb = new List<JobHistory>();
+            List<HistoryCustomer> jobdb = new List<HistoryCustomer>();
             DateTime datebegin = ServiceCheck.DateTime(DateBegin.Value);
             DateTime dateEnd = ServiceCheck.DateTime(DateEnd.Value);
             var JobDb = _context.Job.Include(o => o.Car).Include(o => o.Package).Include(o => o.Employee).Include(o => o.Customer).Include(o => o.OthrerImage).Include(o => o.Package.ModelPackage)
-           .Where(o => o.EmployeeId == idName).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
+           .Where(o => o.EmployeeId == userid).Where(o => o.JobDateTime.Date >= datebegin && o.JobDateTime.Date <= dateEnd).Where(o => o.Report == null).ToList();
             foreach(Job HistoryJob in JobDb)
             {
                 if(HistoryJob == null)
@@ -348,37 +334,37 @@ namespace CarWash.Areas.Api.Account.Controllers
                     response.Success = false;
                     return Json(response);
                 }
-                JobHistory job = new JobHistory(HistoryJob);
+                HistoryCustomer job = new HistoryCustomer(HistoryJob);
                 List<OthrerImage> Jobimage = _context.OthrerImage.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
                 List<ImageService> imageSevices = _context.ImageService.Include(o => o.Job).Where(o => o.JobId == HistoryJob.JobId).ToList();
                 foreach(ImageService sevice in imageSevices)
                 {
                     ImageServicesModel imageFrontBefore = new ImageServicesModel();
-                    imageFrontBefore.Image = imageSevices.Select(o => o.FrontBefore).FirstOrDefault();
+                    imageFrontBefore.Image = sevice.FrontBefore;
                     job.ImagesBeforeService.Add(imageFrontBefore);
                     ImageServicesModel imageBackBefore = new ImageServicesModel();
-                    imageBackBefore.Image = imageSevices.Select(o => o.BackBefore).FirstOrDefault();
+                    imageBackBefore.Image = sevice.BackBefore;
                     job.ImagesBeforeService.Add(imageBackBefore);
                     ImageServicesModel imageLaftBefore = new ImageServicesModel();
-                    imageLaftBefore.Image = imageSevices.Select(o => o.LeftBefore).FirstOrDefault();
+                    imageLaftBefore.Image = sevice.LeftBefore;
                     job.ImagesBeforeService.Add(imageLaftBefore);
                     ImageServicesModel imageRightBefore = new ImageServicesModel();
-                    imageRightBefore.Image = imageSevices.Select(o => o.RightBefore).FirstOrDefault();
+                    imageRightBefore.Image = sevice.RightBefore;
                     job.ImagesBeforeService.Add(imageRightBefore);
                 }
                 foreach(ImageService sevice in imageSevices)
                 {
                     AfterImage imageFrontAfter = new AfterImage();
-                    imageFrontAfter.Image = imageSevices.Select(o => o.FrontAfter).FirstOrDefault();
+                    imageFrontAfter.Image = sevice.FrontAfter;
                     job.ImagesAfterService.Add(imageFrontAfter);
                     AfterImage imageBackAfter = new AfterImage();
-                    imageBackAfter.Image = imageSevices.Select(o => o.BackAfter).FirstOrDefault();
+                    imageBackAfter.Image = sevice.BackAfter;
                     job.ImagesAfterService.Add(imageBackAfter);
                     AfterImage imageLaftAfter = new AfterImage();
-                    imageLaftAfter.Image = imageSevices.Select(o => o.LeftAfter).FirstOrDefault();
+                    imageLaftAfter.Image = sevice.LeftAfter;
                     job.ImagesAfterService.Add(imageLaftAfter);
                     AfterImage imageRightAfter = new AfterImage();
-                    imageRightAfter.Image = imageSevices.Select(o => o.RightAfter).FirstOrDefault();
+                    imageRightAfter.Image = sevice.RightAfter;
                     job.ImagesAfterService.Add(imageRightAfter);
                 }
                 foreach(OthrerImage image in Jobimage)
@@ -394,5 +380,146 @@ namespace CarWash.Areas.Api.Account.Controllers
             return Json(historyResponse);
         }
 
+        [HttpGet]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult Province()
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userid = int.Parse(Id);
+            ShowProvince show = new ShowProvince();
+            var Car = _context.Province.ToList();
+            foreach(Province carIn in Car)
+            {
+                ProvinceModel models = new ProvinceModel();
+                models.ProvinceId = carIn.ProvinceId;
+                models.ProvinceName = carIn.ProvinceName;
+                show.models.Add(models);
+            }
+            ProvinceResponse reponse = new ProvinceResponse();
+            reponse.Success = true;
+            reponse.Message = "สำเร็จ";
+            reponse.Shows = show;
+            return Json(reponse);
+        }
+        [HttpGet]
+        [ServiceFilter(typeof(CarWashAuthorization))]
+        public IActionResult Model(int? brandid)
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userid = int.Parse(Id);
+
+            ShowCarModel show = new ShowCarModel();
+            var model = _context.CarModel.Where(o => o.BrandId == brandid).ToList();
+            foreach(CarModel carIn in model)
+            {
+                ListCarModel models = new ListCarModel();
+                models.Model_Id = carIn.Model_Id;
+                models.ModelName = carIn.ModelName;
+                show.carmodels.Add(models);
+            }
+            CarModelRespons reponse = new CarModelRespons();
+            reponse.Success = true;
+            reponse.Message = "สำเร็จ";
+            reponse.Carmodel = show;
+            return Json(reponse);
+        }
+        [HttpGet]
+        public IActionResult PackageAll()
+        {
+            PackageAllResponse packageAll = new PackageAllResponse();
+            List<PackageAll> all = new List<PackageAll>();
+            // List<ListPrice> listPackageDb = new List<ListPrice>();
+            List<Package> packageallp = _context.Package.Include(o => o.Size).Include(o=>o.ModelPackage).OrderBy(o=>o.ModelPackageId).ToList();
+
+            PackageAll listPackageDb = new PackageAll();
+            foreach(Package package in packageallp)
+            {
+
+                
+                ListPackageName listPackage = new ListPackageName();
+                listPackage.Name = package.ModelPackage.PackageName;
+                listPackageDb.packageNames.Add(listPackage);
+               
+               
+            }
+            List<Package> packageallprice = _context.Package.Include(o => o.ModelPackage).OrderBy(o => o.PackageId).ToList();
+            foreach(Package package1 in packageallprice)
+            {
+                ListPrice listPackage1 = new ListPrice();
+                listPackage1.Prices = package1.Price.ToString();
+                listPackageDb.price.Add(listPackage1);
+            }
+            all.Add(listPackageDb);
+
+            packageAll.Message = "สำเร็จ";
+            packageAll.Success = true;
+            packageAll.Packagealls = all;
+            return Json(packageAll);
+        }
+
+        private int UserId()
+        {
+            string claimUserId = User.Claims.Where(o => o.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value;
+            string Id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            int userId = int.Parse(Id);
+            return userId;
+        }
+        [HttpGet]
+        public IActionResult CheckEmployee(int Id)
+        {
+            IdResponse response = new IdResponse();
+            Job jobdb = _context.Job.Include(o => o.Employee).Include(o => o.Package.ModelPackage).Include(o => o.Customer)
+                        .Include(o => o.Package).Include(o => o.Car).Where(o => o.CustomerId == Id)
+                        .OrderByDescending(o => o.JobId).FirstOrDefault();
+            var EmpId = jobdb.EmployeeId;
+            response.Id = EmpId.GetValueOrDefault(); ;
+            return Json(response);
+        }
+        [HttpGet]
+        public IActionResult Userinfo(int Id)
+        {
+            try
+            {
+                User user = _context.User.Where(o => o.UserId == Id).FirstOrDefault();
+                UserInfo userInfo = new UserInfo();
+                userInfo.UserId = user.UserId;
+                userInfo.FullName = user.FullName;
+                userInfo.IdCardNumber = user.IdCardNumber;
+                userInfo.Phone = user.Phone;
+                userInfo.Code = user.Code;
+                userInfo.Image = user.Image;
+                return Json(userInfo);
+            }
+            catch(Exception)
+            {
+
+            }
+            return Ok();
+        }
+        [HttpPost]
+        public IActionResult getemp([FromBody] ReqChat req)
+        {
+            BaseResponse response = new BaseResponse();
+            try
+            {
+                Chat chat = new Chat();
+                chat.Name = req.name;
+                chat.Message = req.message;
+                _context.Chat.Add(chat);
+                _context.SaveChanges();
+                response.Message = "สำเร็จ";
+                response.Success = true;
+            }
+            catch
+            {
+                response.Message = "ไม่สำเร็จ";
+                response.Success = false;
+            }
+            return Json(response);
+        }
+
     }
+
 }
